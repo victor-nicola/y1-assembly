@@ -8,7 +8,7 @@ output_bold: .asciz "\x1B[1m"
 output_faint: .asciz "\x1B[2m"
 output_conceal: .asciz "\x1B[8m"
 output_reveal: .asciz "\x1B[28m"
-output_blink: .asciz "\x1B[6m"
+output_blink: .asciz "\x1B[5m"
 output_ch: .asciz "%c"
 
 print_char_loop:
