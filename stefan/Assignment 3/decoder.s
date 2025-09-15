@@ -26,13 +26,20 @@ decode:
 	pushq	%rbp 			# push the base pointer (and align the stack)
 	movq	%rsp, %rbp		# copy stack pointer value to base pointer
 
+	pushq	%rdi
+	movq	$0, %rdi
+
 	# your code goes here
 	movq $0, %r8 	# index
 	movq $0, %r9	# amount
 	movq $0, %r10	# character
 	loop:
+		popq %rdi
 
-		movq (%rbx,%r8,8), %rax	# load element of message into rax
+		movq (%rdi,%r8,8), %rax	# load element of message into rax
+
+		pushq %rdi
+		movq $0, %rdi
 
 		movzbq %al, %r10 	  	# zero extend lowest byte (character) to register r10
 
@@ -85,7 +92,7 @@ main:
 	pushq	%rbp 			# push the base pointer (and align the stack)
 	movq	%rsp, %rbp		# copy stack pointer value to base pointer
 
-	movq	$MESSAGE, %rbx	# first parameter: address of the message
+	movq	$MESSAGE, %rdi	# first parameter: address of the message
 	call	decode			# call decode
 
 
@@ -94,3 +101,4 @@ main:
 	popq	%rbp			# restore base pointer location 
 	movq	$0, %rdi		# load program exit code
 	call	exit			# exit the program
+	
