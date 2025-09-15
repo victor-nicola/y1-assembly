@@ -6,13 +6,30 @@ output_format: .asciz "Factorial of %ld is %ld\n"
 factorial:
     pushq %rbp
     movq %rsp, %rbp
-    subq $16, %rsp
 
     cmp $1, %rdi
-    jle .base_case
+    jle base_case
 
     decq %rdi
-    call .factorial
+
+    pushq %rdi
+    pushq %rsi
+    pushq %rcx
+    pushq %rdx
+    pushq %r8
+    pushq %r9
+    pushq %r10
+    pushq %r11
+    call factorial
+    popq %r11
+    popq %r10
+    popq %r9
+    popq %r8
+    popq %rdx
+    popq %rcx
+    popq %rsi
+    popq %rdi
+
     incq %rdi
     imulq %rdi, %rax
     
@@ -45,11 +62,14 @@ main:
     movq -16(%rbp), %rdi
     call factorial
 
+    pushq %rax
     movq $output_format, %rdi
     movq -16(%rbp), %rsi
     movq %rax, %rdx
     movq $0, %rax
     call printf
+    popq %rax
 
-    movq $0, %rdi
+    movq %rbp, %rsp
+    popq %rbp
     call exit

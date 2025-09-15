@@ -29,33 +29,38 @@ inout:
     leaq -32(%rbp), %rdx
     call scanf
     
-    movq -16(%rbp), %rsi
-    movq -32(%rbp), %rdx
+    movq -16(%rbp), %rdi # base
+    movq -32(%rbp), %rsi # exponent
     
-    movq $0, %rax
-    movq $1, %rbx
-    
-    call for_start
+    call pow
 
+    movq %rax, %rcx
     movq $0, %rax
     movq $output_format, %rdi
     movq -16(%rbp), %rsi
     movq -32(%rbp), %rdx
-    movq %rbx, %rcx
     call printf
 
     movq %rbp, %rsp
     popq %rbp
     ret
 
-for_start:
-    cmpq %rdx, %rax
-    jge for_end
+pow:
+    pushq %rbp
+    movq %rsp, %rbp
 
-    imulq %rsi, %rbx
+    mov $0, %rcx
+    mov $1, %rax
+    for_start:
+        cmpq %rsi, %rcx
+        jge for_end
 
-    incq %rax
-    jmp for_start
+        imulq %rdi, %rax
 
-for_end:
-    ret
+        incq %rcx
+        jmp for_start
+
+    for_end:
+        movq %rbp, %rsp
+        popq %rbp
+        ret
