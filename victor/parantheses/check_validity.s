@@ -21,7 +21,7 @@ check_validity:
 
 	pushq %rbx
 	movq %rdi, %rbx
-	movq %rsp, %r11
+	movq %rsp, %r11 # save the stack pointer before continuing
 
 	movq $0, %r8 # index in string
 	jmp loop_start

@@ -119,11 +119,13 @@ sha1_chunk:
                 # %ebx = b and d
                 mov %r11d, %ebx
                 and %r13d, %ebx
+
                 xor %ebx, %eax # %eax = (b and c) xor (b and d)
 
                 # %ebx = c and d
                 mov %r12d, %ebx
                 and %r13d, %ebx
+
                 xor %ebx, %eax # %eax = (b and c) xor (b and d) xor (c and d)
 
                 mov $0x8F1BBCDC, %ebx
@@ -137,6 +139,8 @@ sha1_chunk:
                 mov $0xCA62C1D6, %ebx
                 jmp operations
 
+            # f = %eax
+            # k = %ebx
             operations:
                 # temp = %ecx = a leftrotate 5
                 mov %r10d, %ecx
@@ -146,17 +150,17 @@ sha1_chunk:
                 add %r14d, %ecx           # (a leftrotate 5) + f + e
                 add %ebx, %ecx            # (a leftrotate 5) + f + e + k
                 movslq %r9d, %rdx
-                add (%rsi, %rdx, 4), %eax # (a leftrotate 5) + f + e + k + w[i]
+                add (%rsi, %rdx, 4), %ecx # (a leftrotate 5) + f + e + k + w[i]
 
                 mov %r13d, %r14d # e = d
                 mov %r12d, %r13d # d = c
                 
-                mov %r11d, %ecx
-                rol $30, %ecx # b leftrotate 30
-                mov %ecx, %r12d # c = b leftrotate 30
+                mov %r11d, %eax
+                rol $30, %eax # b leftrotate 30
+                mov %eax, %r12d # c = b leftrotate 30
 
                 mov %r10d, %r11d # b = a
-                mov %eax, %r10d # a = temp
+                mov %ecx, %r10d # a = temp
             
             inc %r9d
             jmp main_loop
