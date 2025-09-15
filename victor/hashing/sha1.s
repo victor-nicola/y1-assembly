@@ -32,7 +32,7 @@ sha1_chunk:
 
         # get the value
         mov (%rsi, %rax, 4), %edx
-        xor %edx, %ecx
+        xor %edx, %ecx # w[i - 3] xor w[i - 8]
 
         # get the index (i - 14)
         movslq %r9d, %rax
@@ -40,7 +40,7 @@ sha1_chunk:
 
         # get the value
         mov (%rsi, %rax, 4), %edx
-        xor %edx, %ecx
+        xor %edx, %ecx # w[i - 3] xor w[i - 8] xor w[i - 14]
 
         # get the index (i - 16)
         movslq %r9d, %rax
@@ -48,7 +48,7 @@ sha1_chunk:
 
         # get the value
         mov (%rsi, %rax, 4), %edx
-        xor %edx, %ecx
+        xor %edx, %ecx # w[i - 3] xor w[i - 8] xor w[i - 14] xor w[i - 16]
         
         # leftrotate %ecx by 1
         rol $1, %ecx
