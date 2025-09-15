@@ -14,6 +14,8 @@ fmt_result: .asciz "result = %ld\n"
 .text
 
 pow:
+    pushq %rbp
+    movq %rsp, %rbp
     movq $1, %rax
 
 loop:
@@ -24,34 +26,39 @@ loop:
     jmp loop
 
 end_loop:
+    popq %rbp
     ret
 
 scanf_base:
+    pushq %rbp
+    movq %rsp, %rbp
 
-    xor %rax, %rax
+    movq $0, %rax
     leaq fmt_base(%rip), %rdi
     leaq base_val(%rip), %rsi
     call scanf
 
+    popq %rbp
     ret
 
 scanf_exponent:
+    pushq %rbp
+    movq %rsp, %rbp
 
-    xor %rax, %rax
+    movq $0, %rax
     leaq fmt_exponent(%rip), %rdi
     leaq exponent_val(%rip), %rsi
     call scanf
 
+    popq %rbp
     ret
 
 main:
     pushq %rbp
     movq %rsp, %rbp
 
-    sub $8, %rsp #align stack
     call scanf_base #scan base
     call scanf_exponent #scan exponent
-    add $8, %rsp #restore stack
 
 
     movq base_val(%rip), %rdi # move base to rdi
@@ -60,7 +67,7 @@ main:
     call pow
     movq %rax, %rsi
     leaq fmt_result(%rip), %rdi
-    xor %rax, %rax
+    movq $0, %rax
     call printf
 
     movq $0, %rax
