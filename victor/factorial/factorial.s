@@ -3,7 +3,7 @@ msg: .asciz "Input a number\n"
 input_format: .asciz "%ld"
 output_format: .asciz "Factorial of %ld is %ld\n"
 
-.factorial:
+factorial:
     pushq %rbp
     movq %rsp, %rbp
     subq $16, %rsp
@@ -20,7 +20,7 @@ output_format: .asciz "Factorial of %ld is %ld\n"
     popq %rbp
     ret
 
-.base_case:
+base_case:
     movq $1, %rax
     movq %rbp, %rsp
     popq %rbp
@@ -43,7 +43,7 @@ main:
     call scanf
 
     movq -16(%rbp), %rdi
-    call .factorial
+    call factorial
 
     movq $output_format, %rdi
     movq -16(%rbp), %rsi

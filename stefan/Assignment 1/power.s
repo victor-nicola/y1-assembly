@@ -13,7 +13,7 @@ fmt_result: .asciz "result = %ld\n"
 
 .text
 
-power:
+pow:
     movq $1, %rax
 
 loop:
@@ -57,7 +57,7 @@ main:
     movq base_val(%rip), %rdi # move base to rdi
     movq exponent_val(%rip), %rsi  # move exponent to rsi
 
-    call power
+    call pow
     movq %rax, %rsi
     leaq fmt_result(%rip), %rdi
     xor %rax, %rax

@@ -1,14 +1,10 @@
 .data
 
-fmt: .asciz "\x1B[38;5;%ldm\x1B[48;5;%ldm%c"
-reset_term: .asciz "\x1B[0m"
-output_effect: .asciz "\x1B[%ldm"
+fmt:	.asciz "%c"
 
 .text
 
-.include "helloWorld.s"
-// .include "abc_sorted.s"
-// .include "final.s"
+.include "abc_sorted.s"
 
 .global main
 
@@ -23,7 +19,6 @@ output_effect: .asciz "\x1B[%ldm"
 #   first: the address of the message to read                *
 #   return: no return value                                  *
 # ************************************************************
-
 
 
 decode:
@@ -45,35 +40,25 @@ decode:
 		movzbq %al, %r9      	# copy full quad
 
 		shr $8, %rax
-		// andl $0xffffffff, %eax
+		andl $0xffffffff, %eax
 		movl %eax, %r8d
 
-		shr $32, %rax			#shift 32 bits to the right to get rid of index
-		movzbq %al, %r11		#move lower 8 bits into r11 (foreground)
-
-		shr $8, %rax			#shift 8 bits to the right to get rid of foreground
-		movzbq %al, %r12		#move lower 8 bits into r12 (background)
-
-		cmpq %r11, %r12
-		jne print_loop
 
 
 	print_loop:
 
-		movq %r10, %rcx 		# move character to rsi
-		movq %r11, %rsi
-		movq %r12, %rdx
+		movq %r10, %rsi 		# move character to rsi
 		leaq fmt(%rip), %rdi	# load address of format string to rdi
 		movq $0, %rax			# clear rax for printf
 
 		pushq %r8
 		pushq %r9
 		pushq %r10
-		pushq %r11
+		subq $8, %rsp
 
 		call printf 			# call printf
 
-		popq %r11
+		addq $8, %rsp
 		popq %r10
 		popq %r9
 		popq %r8
@@ -102,10 +87,7 @@ main:
 
 	movq	$MESSAGE, %rbx	# first parameter: address of the message
 	call	decode			# call decode
-	
-	xor %rax, %rax
-	movq $reset_term, %rdi
-	call printf
+
 
 	#epilogue
 	movq	%rbp, %rsp
