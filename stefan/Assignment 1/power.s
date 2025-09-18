@@ -14,18 +14,22 @@ fmt_result: .asciz "result = %ld\n"
 .text
 
 pow:
+    #prologue
     pushq %rbp
     movq %rsp, %rbp
     movq $1, %rax
 
 loop:
+
     cmpq $0, %rsi
     je end_loop
-    imulq %rdi, %rax
-    decq %rsi
+    imulq %rdi, %rax    #multiply rax by the base
+    decq %rsi           #decrement exponent
     jmp loop
 
 end_loop:
+    #epilogue
+    movq %rbp, %rsp
     popq %rbp
     ret
 
@@ -38,6 +42,7 @@ scanf_base:
     leaq base_val(%rip), %rsi
     call scanf
 
+    movq %rbp, %rsp
     popq %rbp
     ret
 
@@ -50,6 +55,7 @@ scanf_exponent:
     leaq exponent_val(%rip), %rsi
     call scanf
 
+    movq %rbp, %rsp
     popq %rbp
     ret
 

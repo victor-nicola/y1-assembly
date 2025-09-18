@@ -4,7 +4,7 @@ fmt:	.asciz "%c"
 
 .text
 
-.include "abc_sorted.s"
+.include "final.s"
 
 .global main
 
