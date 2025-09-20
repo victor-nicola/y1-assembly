@@ -2,6 +2,7 @@
 format: .asciz "My name is %s. I think I’ll get a %u for my exam. What does %r do? And %%?\n"
 percent: .asciz "%"
 minus: .asciz "-"
+name: .asciz "Piet"
 
 .text
 
@@ -166,8 +167,11 @@ my_printf:
     pushq %r14
     pushq %r15
 
-    movq %rdi, %r12 # keep the string safe
+    movq %rdi, %r12 # keep the format string safe
+    movq %rsi, %r14 # keep the first string safe
+    movq %rcx, %r15 # keep the second string safe
     movq $0, %r13 # index in the string
+    movq $1, %r8 # which argument is being printed
     loop_my_printf:
         cmpb $0, (%r12, %r13, 1)
         je loop_my_printf_end
@@ -202,13 +206,57 @@ my_printf:
             syscall
 
         call_printd:
+            cmpq $1, %r8
+            jg second_stringd
+
+            movq %r14, %rdi
+            call printd
+
+            incq %r8
+
             jmp continue_loop_my_printf
+
+            second_stringd:
+                movq %r15, %rdi
+                call printd
+
+                jmp continue_loop_my_printf
 
         call_printu:
+            cmpq $1, %r8
+            jg second_stringu
+
+            movq %r14, %rdi
+            call printu
+
+            incq %r8
+
             jmp continue_loop_my_printf
 
+            second_stringu:
+                movq %r15, %rdi
+                call printu
+
+                jmp continue_loop_my_printf
+
+
         call_prints:
+            cmpq $1, %r8
+            jg second_strings
+
+            movq %r14, %rdi
+            call prints
+
+            incq %r8
+
             jmp continue_loop_my_printf
+
+            second_strings:
+                movq %r15, %rdi
+                call prints
+
+                jmp continue_loop_my_printf
+
 
         call_print_percent:
             movq $1, %rax # call sys_write
@@ -248,8 +296,15 @@ main:
     # movq $format, %rdi
     # call my_printf
 
-    movq $-23, %rdi
-    call printd
+    // leaq format(%rip), %rdi
+    // movq $name, %rsi
+    // movq $10, %rcx
+    // call my_printf
+
+    leaq format(%rip), %rdi
+    leaq name(%rip), %rsi
+    movq $10, %rcx
+    call my_printf
 
     # epilogue
     movq %rbp, %rsp
