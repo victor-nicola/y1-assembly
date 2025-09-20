@@ -2,7 +2,7 @@
 format: .asciz "My name is %s. I think I’ll get a %u for my exam. What does %r do? And %%?\n"
 percent: .asciz "%"
 minus: .asciz "-"
-name: .asciz "Piet"
+name: .asciz "Victor"
 
 .text
 
@@ -155,7 +155,7 @@ prints:
     popq %rbp
     ret
 
-my_printf:
+get_arg:
     # prologue
     pushq %rbp
     movq %rsp, %rbp
@@ -167,11 +167,68 @@ my_printf:
     pushq %r14
     pushq %r15
 
+    # %rdi = index of arg
+    # %rsi = old base pointer
+
+    cmp $5, %rdi # we have max 5 register args
+    jge get_stack_arg
+    
+    get_register_arg:
+        incq %rdi # 0-index to 1-index
+        movq %rdi, %rax
+        movq $8, %rbx
+        mul %rbx # get the position in the stack
+        subq %rax, %rsi # get pointer
+        movq (%rsi), %rax # put value in return register
+        jmp after_get
+
+    get_stack_arg:
+        movq %rdi, %rax
+        subq $5, %rax # get index into the stack portion of args
+        addq $2, %rax # skip return address
+        movq $8, %rbx
+        mul %rbx # get the position in the stack
+        addq %rax, %rsi # get pointer
+        movq (%rsi), %rax # put value in return register
+        jmp after_get
+
+    after_get:
+
+    # get callee-saved registries
+    popq %r15
+    popq %r14
+    popq %r13
+    popq %r12
+    popq %rbx
+
+    # epilogue
+    movq %rbp, %rsp
+    popq %rbp
+    ret
+
+my_printf:
+    # prologue
+    pushq %rbp
+    movq %rsp, %rbp
+
+    # save parameter registries
+    pushq %rsi
+    pushq %rdx
+    pushq %rcx
+    pushq %r8
+    pushq %r9
+    sub $16, %rsp # align the stack
+
+    # preserve callee-saved registries
+    pushq %rbx
+    pushq %r12
+    pushq %r13
+    pushq %r14
+    pushq %r15
+
     movq %rdi, %r12 # keep the format string safe
-    movq %rsi, %r14 # keep the first string safe
-    movq %rcx, %r15 # keep the second string safe
     movq $0, %r13 # index in the string
-    movq $1, %r8 # which argument is being printed
+    movq $0, %rbx # which argument is being printed
     loop_my_printf:
         cmpb $0, (%r12, %r13, 1)
         je loop_my_printf_end
@@ -204,59 +261,34 @@ my_printf:
             addq %r13, %rsi # get to the current position
             movq $1, %rdx # we only print one byte
             syscall
+            jmp continue_loop_my_printf
 
         call_printd:
-            cmpq $1, %r8
-            jg second_stringd
-
-            movq %r14, %rdi
+            movq %rbx, %rdi
+            movq %rbp, %rsi
+            call get_arg
+            movq %rax, %rdi
+            incq %rbx # go to the next arg
             call printd
-
-            incq %r8
-
             jmp continue_loop_my_printf
-
-            second_stringd:
-                movq %r15, %rdi
-                call printd
-
-                jmp continue_loop_my_printf
 
         call_printu:
-            cmpq $1, %r8
-            jg second_stringu
-
-            movq %r14, %rdi
+            movq %rbx, %rdi
+            movq %rbp, %rsi
+            call get_arg
+            movq %rax, %rdi
+            incq %rbx # go to the next arg
             call printu
-
-            incq %r8
-
             jmp continue_loop_my_printf
-
-            second_stringu:
-                movq %r15, %rdi
-                call printu
-
-                jmp continue_loop_my_printf
-
 
         call_prints:
-            cmpq $1, %r8
-            jg second_strings
-
-            movq %r14, %rdi
+            movq %rbx, %rdi
+            movq %rbp, %rsi
+            call get_arg
+            movq %rax, %rdi
+            incq %rbx # go to the next arg
             call prints
-
-            incq %r8
-
             jmp continue_loop_my_printf
-
-            second_strings:
-                movq %r15, %rdi
-                call prints
-
-                jmp continue_loop_my_printf
-
 
         call_print_percent:
             movq $1, %rax # call sys_write
@@ -266,7 +298,7 @@ my_printf:
             syscall
 
             jmp continue_loop_my_printf
-        
+
         continue_loop_my_printf:
             incq %r13 # go to the next character
             jmp loop_my_printf
@@ -293,17 +325,9 @@ main:
     movq %rsp, %rbp
 
     # test the function
-    # movq $format, %rdi
-    # call my_printf
-
-    // leaq format(%rip), %rdi
-    // movq $name, %rsi
-    // movq $10, %rcx
-    // call my_printf
-
     leaq format(%rip), %rdi
     leaq name(%rip), %rsi
-    movq $10, %rcx
+    movq $10, %rdx
     call my_printf
 
     # epilogue
