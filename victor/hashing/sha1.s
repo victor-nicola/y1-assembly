@@ -120,13 +120,13 @@ sha1_chunk:
                 mov %r11d, %ebx
                 and %r13d, %ebx
 
-                xor %ebx, %eax # %eax = (b and c) xor (b and d)
+                or %ebx, %eax # %eax = (b and c) or (b and d)
 
                 # %ebx = c and d
                 mov %r12d, %ebx
                 and %r13d, %ebx
 
-                xor %ebx, %eax # %eax = (b and c) xor (b and d) xor (c and d)
+                or %ebx, %eax # %eax = (b and c) or (b and d) or (c and d)
 
                 mov $0x8F1BBCDC, %ebx
                 jmp operations
