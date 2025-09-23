@@ -1,5 +1,5 @@
 .data
-format: .asciz "My name is %s. I think I’ll get a %u for my exam. What does %r do? And %%?\n"
+format: .asciz "My name is %s. I think I’ll get a %u %d %d %d %d for my exam. What does %r do? And %%?\n"
 percent: .asciz "%"
 minus: .asciz "-"
 name: .asciz "Victor"
@@ -17,6 +17,7 @@ printu:
     pushq %r13
     pushq %r14
     pushq %r15
+    subq $8, %rsp
 
     movq %rsp, %r12 # save initial stack pointer
     loop_get_digits:
@@ -51,6 +52,7 @@ printu:
     loop_printu_end:
 
     # get callee-saved registries
+    addq $8, %rsp
     popq %r15
     popq %r14
     popq %r13
@@ -73,6 +75,7 @@ printd:
     pushq %r13
     pushq %r14
     pushq %r15
+    subq $8, %rsp
 
     movq %rdi, %rax
     shr $63, %rax # get first bit
@@ -84,12 +87,15 @@ printd:
 
     negative_preprocess:
         pushq %rdi # save the number
+        subq $8, %rsp
         
         movq $1, %rax # call sys_write
         movq $1, %rdi # write to stdout
         movq $minus, %rsi # print sign
         movq $1, %rdx # we only print one byte
         syscall
+
+        addq $8, %rsp
         
         popq %rdi # get the number
         
@@ -100,8 +106,11 @@ printd:
     
     print_number:
         call printu
+        
+
 
     # get callee-saved registries
+    addq $8, %rsp
     popq %r15
     popq %r14
     popq %r13
@@ -124,6 +133,7 @@ prints:
     pushq %r13
     pushq %r14
     pushq %r15
+    subq $8, %rsp
 
     movq %rdi, %r12 # keep the string safe
     movq $0, %r13 # index in the string
@@ -144,6 +154,7 @@ prints:
     loop_prints_end:
 
     # get callee-saved registries
+    addq $8, %rsp
     popq %r15
     popq %r14
     popq %r13
@@ -166,6 +177,7 @@ get_arg:
     pushq %r13
     pushq %r14
     pushq %r15
+    subq $8, %rsp
 
     # %rdi = index of arg
     # %rsi = old base pointer
@@ -195,6 +207,7 @@ get_arg:
     after_get:
 
     # get callee-saved registries
+    addq $8, %rsp
     popq %r15
     popq %r14
     popq %r13
@@ -225,6 +238,7 @@ my_printf:
     pushq %r13
     pushq %r14
     pushq %r15
+    subq $8, %rsp
 
     movq %rdi, %r12 # keep the format string safe
     movq $0, %r13 # index in the string
@@ -306,6 +320,7 @@ my_printf:
     loop_my_printf_end:
 
     # get callee-saved registries
+    addq $8, %rsp
     popq %r15
     popq %r14
     popq %r13
@@ -327,7 +342,11 @@ main:
     # test the function
     leaq format(%rip), %rdi
     leaq name(%rip), %rsi
-    movq $10, %rdx
+    movq $-0xFFFFFF00, %rdx
+    movq $-0xFFFFFF00, %rcx
+    movq $10, %r8
+    movq $18, %r9
+    pushq %rdx
     call my_printf
 
     # epilogue

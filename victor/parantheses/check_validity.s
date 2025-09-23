@@ -59,7 +59,7 @@ loop_start:
 
 	cmp $60, %r9 # current character == '<'
 	je push_stack
-
+	
 	# the character is either ), ], } or >
 	cmp $41, %r9 # current character == ')'
 	je pop_round
