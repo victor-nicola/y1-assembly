@@ -59,6 +59,7 @@ actual_branch:
 		cmpb $3, state(, %rdi, 1) # if it's saturated don't increment
 		jge actual_branch_end
 		incb state(, %rdi, 1)
+		jmp actual_branch_end
 	not_taken:
 		cmpb $0, state(, %rdi, 1) # if it's saturated don't decrement
 		jle actual_branch_end
