@@ -24,9 +24,6 @@ init:
 	pushq %r15
 	subq $8, %rsp # align stack
 
-<<<<<<< HEAD
-	
-=======
     movq $0, %rcx
     movq $STATE_SIZE, %rdx
 
@@ -68,7 +65,6 @@ get_index:
 	xorq history, %rdi # combine history and pointer
 	andq $STATE_MASK, %rdi # fit into array
 	movq %rdi, %rax
->>>>>>> refs/remotes/origin/main
 
 	# restore callee-saved registries
 	addq $8, %rsp
