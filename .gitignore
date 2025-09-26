@@ -1,2 +1,2 @@
 .DS_STORE
-common/game/lib
+**/lib/
