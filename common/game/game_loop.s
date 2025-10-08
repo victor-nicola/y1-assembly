@@ -67,30 +67,47 @@ game_loop:
         je .main_loop # if no event loop again
 
         # check if the event type is SDL_QUIT
-        movl -160(%rbp), %eax
-        cmpl $0x100, %eax
+        cmpl $0x100, -160(%rbp)
         je .main_loop_end
 
         # check if the event type is SDL_EVENT_KEY_DOWN
-        cmpl $0x300, %eax
+        cmpl $0x300, -160(%rbp)
+        je .test_key
+        
+        # check if the event type is SDL_EVENT_MOUSE_BUTTON_DOWN
+        cmpl $0x401, -160(%rbp)
+        jne .main_loop
+
+        # the button value is stored with a 24 byte offset from the SDL_Event address
+        cmpb $1, -136(%rbp) # if the left mouse button was pressed
         jne .main_loop
         
-        # the key value is stored with a 28 byte offset from the SDL_Event address
-        movl -132(%rbp), %eax # get key code
-        cmpl $0x1b, %eax # if escape was pressed quit
-        je .main_loop_end
+        # the x value is stored with a 28 byte offset from the SDL_Event address
+        movss -132(%rbp), %xmm0
+        movss %xmm0, sprite_x(%rip) # update x
+        # the y value is stored with a 32 byte offset from the SDL_Event address
+        movss -128(%rbp), %xmm0
+        movss %xmm0, sprite_y(%rip) # update y
 
-        cmpl $0x40000052, %eax # if up arrow was pressed
-        je .move_sprite_up
+        .test_key:
+            # the key value is stored with a 28 byte offset from the SDL_Event address
+            movl -132(%rbp), %eax # get key code
+            cmpl $0x1b, %eax # if escape was pressed quit
+            je .main_loop_end
 
-        cmpl $0x40000051, %eax # if down arrow was pressed
-        je .move_sprite_down
+            cmpl $0x40000052, %eax # if up arrow was pressed
+            je .move_sprite_up
 
-        cmpl $0x40000050, %eax # if left arrow was pressed
-        je .move_sprite_left
+            cmpl $0x40000051, %eax # if down arrow was pressed
+            je .move_sprite_down
 
-        cmpl $0x4000004f, %eax # if right arrow was pressed
-        je .move_sprite_right
+            cmpl $0x40000050, %eax # if left arrow was pressed
+            je .move_sprite_left
+
+            cmpl $0x4000004f, %eax # if right arrow was pressed
+            je .move_sprite_right
+
+            jmp .main_loop
 
         .move_sprite_up:
             movss sprite_y(%rip), %xmm0
