@@ -2,10 +2,10 @@
 .section .note.GNU-stack,"",@progbits
 
 .section .data
-initError: .asciz "SDL_Init Error: %s\n"
-createWindowError: .asciz "SDL_CreateWindow Error: %s\n"
-createRendererError: .asciz "SDL_CreateRenderer Error: %s\n"
-windowTitle: .asciz "Assembly Game!"
+init_error: .asciz "SDL_Init Error: %s\n"
+create_window_error: .asciz "SDL_CreateWindow Error: %s\n"
+create_renderer_error: .asciz "SDL_CreateRenderer Error: %s\n"
+window_title: .asciz "Assembly Game!"
 
 .section .text
 .global main
@@ -27,7 +27,7 @@ main:
 
     call SDL_GetError # get the error string address in %rax
     movq %rax, %rsi
-    leaq initError(%rip), %rdi
+    leaq init_error(%rip), %rdi
     movl $0, %eax
     call printf
     
@@ -39,7 +39,7 @@ create_window:
     # SDL_Window* win = SDL_CreateWindow("Assembly Game!", 640, 480, SDL_WINDOW_FULLSCREEN);
     
     movl $0, %eax
-    leaq windowTitle(%rip), %rdi
+    leaq window_title(%rip), %rdi
     movl $640, %esi
     movl $480, %edx
     movl $0x1, %ecx
@@ -54,7 +54,7 @@ create_window:
     
     call SDL_GetError # get the error string address in %rax
     movq %rax, %rsi
-    leaq createWindowError(%rip), %rdi
+    leaq create_window_error(%rip), %rdi
     movl $0, %eax
     call printf
     
@@ -82,7 +82,7 @@ create_renderer:
     
     call SDL_GetError
     movq %rax, %rsi
-    leaq createRendererError(%rip), %rdi
+    leaq create_renderer_error(%rip), %rdi
     movl $0, %eax
     call printf
     
