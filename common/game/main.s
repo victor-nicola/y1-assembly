@@ -7,15 +7,25 @@ create_window_error: .asciz "SDL_CreateWindow Error: %s\n"
 create_renderer_error: .asciz "SDL_CreateRenderer Error: %s\n"
 window_title: .asciz "Assembly Game!"
 
+debug_string: .asciz "width: %d\theight: %d\n"
+window_width:  .long 0
+window_height: .long 0
+
 .section .text
 .global main
+.global window_width
+.global window_height
+.global debug_string
 
 main:
     pushq %rbp
     movq %rsp, %rbp
 
-    # allocate space for win and ren
-    subq $16, %rsp
+    # allocate space for win, ren, SDL_Event
+    subq $144, %rsp
+    # 8 for window (-8 to -1)
+    # 8 for renderer (-16 to -9)
+    # 128 for SDL_Event (-144 to -17)
 
     # 1st arg: SDL_INIT_VIDEO (0x20)
     movl $0x20, %edi
@@ -36,12 +46,12 @@ main:
     jmp cleanup_exit
 
 create_window:
-    # SDL_Window* win = SDL_CreateWindow("Assembly Game!", 640, 480, SDL_WINDOW_FULLSCREEN);
+    # SDL_Window* win = SDL_CreateWindow("some title", 0, 0, SDL_WINDOW_FULLSCREEN);
     
     movl $0, %eax
     leaq window_title(%rip), %rdi
-    movl $640, %esi
-    movl $480, %edx
+    movl $0, %esi
+    movl $0, %edx
     movl $0x1, %ecx
     
     # need to save the window pointer
@@ -68,6 +78,7 @@ create_renderer:
     # SDL_Renderer* ren = SDL_CreateRenderer(win, NULL);
     movq -8(%rbp), %rdi
     movl $0, %esi
+    movl $0x6, %edx # flags (0x6 = ACCELERATED | PRESENTVSYNC)
     
     call SDL_CreateRenderer
     movq %rax, -16(%rbp) # save renderer pointer
@@ -93,7 +104,23 @@ create_renderer:
     jmp cleanup_exit
 
 call_game_loop:
-    movq -16(%rbp), %rdi
+
+    .wait_for_resize:
+        leaq -144(%rbp), %rdi # place to put the SDL_Event
+        call SDL_PollEvent
+        cmpl $0, %eax # check if SDL_PollEvent returned 0 (no event)
+        je .wait_for_resize # if no event loop again
+
+        # check if the event type is SDL_EVENT_WINDOW_RESIZED
+        cmpl $0x206, -144(%rbp)
+        jne .wait_for_resize
+
+    movq -8(%rbp), %rdi # window
+    leaq window_width(%rip), %rsi
+    leaq window_height(%rip), %rdx
+    call SDL_GetWindowSizeInPixels
+
+    movq -16(%rbp), %rdi # renderer
     call game_loop
 
 cleanup:
@@ -109,8 +136,8 @@ cleanup:
     movl $0, %eax
 
 cleanup_exit:
-    # deallocate space for win and ren
-    addq $16, %rsp
+    # deallocate space
+    addq $144, %rsp
     
     movq %rbp, %rsp
     popq %rbp

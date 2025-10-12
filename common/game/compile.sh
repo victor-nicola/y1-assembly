@@ -1,0 +1,1 @@
+gcc -g main.s game_loop.s menu.s -o game -no-pie -I./lib/SDL/include -L./lib/SDL/build_sdl -lSDL3 -Wl,-rpath=$(pwd)/lib/SDL/build_sdl -ldl -lpthread -lm
