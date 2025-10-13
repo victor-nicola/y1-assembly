@@ -7,7 +7,7 @@ create_window_error: .asciz "SDL_CreateWindow Error: %s\n"
 create_renderer_error: .asciz "SDL_CreateRenderer Error: %s\n"
 window_title: .asciz "Assembly Game!"
 
-debug_string: .asciz "width: %d\theight: %d\n"
+debug_string: .asciz "test\n"
 window_width:  .long 0
 window_height: .long 0
 

@@ -114,9 +114,6 @@ game_loop:
         .test_key:
             # the key value is stored with a 28 byte offset from the SDL_Event address
             movl -108(%rbp), %eax # get key code
-            cmpl $0x1b, %eax # if escape was pressed quit
-            je .main_loop_end
-
             cmpl $0x40000052, %eax # if up arrow was pressed
             je .move_sprite_up
 
@@ -134,6 +131,9 @@ game_loop:
 
             movq -8(%rbp), %rdi # pass the renderer pointer
             call render_menu
+
+            cmpq $-1, %rax # if we need to quit the game
+            je .main_loop_end
 
             jmp .render_frame
 
