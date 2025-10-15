@@ -1,31 +1,43 @@
-# this directive ensures the stack is not executable for security reasons (i get an error on fedora 42 if i don't have this)
 .section .note.GNU-stack,"",@progbits
 
 .section .data
 init_error: .asciz "SDL_Init Error: %s\n"
 create_window_error: .asciz "SDL_CreateWindow Error: %s\n"
 create_renderer_error: .asciz "SDL_CreateRenderer Error: %s\n"
+ttf_init_error: .asciz "TTF_Init Error: %s\n"
+ttf_open_font_error: .asciz "TTF_OpenFont Error: %s\n"
+ttf_create_text_engine: .asciz "TTF_CreateRendererTextEngine Error: %s\n"
+ttf_create_text: .asciz "TTF_CreateText Error: %s\n"
 window_title: .asciz "Assembly Game!"
+font_path: .asciz "./assets/fonts/PixelatedEleganceRegular-ovyAA.ttf"
+font_size: .long 20
 
 debug_string: .asciz "test\n"
+starter_string: .asciz ""
 window_width:  .long 0
 window_height: .long 0
 
-.section .text
-.global main
 .global window_width
 .global window_height
 .global debug_string
+
+.section .bss
+.comm game_font, 8
+.comm game_text, 8
+.comm game_ren, 8
+.comm game_win, 8
+
+.section .text
+.global main
 
 main:
     pushq %rbp
     movq %rsp, %rbp
 
-    # allocate space for win, ren, SDL_Event
+    # allocate space for SDL_Event, text engine
     subq $144, %rsp
-    # 8 for window (-8 to -1)
-    # 8 for renderer (-16 to -9)
-    # 128 for SDL_Event (-144 to -17)
+    # 128 for SDL_Event (-128 to -1)
+    # 8 for text engine (-136 to -129)
 
     # 1st arg: SDL_INIT_VIDEO (0x20)
     movl $0x20, %edi
@@ -56,7 +68,7 @@ create_window:
     
     # need to save the window pointer
     call SDL_CreateWindow
-    movq %rax, -8(%rbp)
+    movq %rax, game_win(%rip)
 
     # check for error (NULL is error)
     cmpq $0, %rax
@@ -76,19 +88,19 @@ create_window:
 
 create_renderer:
     # SDL_Renderer* ren = SDL_CreateRenderer(win, NULL);
-    movq -8(%rbp), %rdi
+    movq game_win(%rip), %rdi
     movl $0, %esi
     movl $0x6, %edx # flags (0x6 = ACCELERATED | PRESENTVSYNC)
     
     call SDL_CreateRenderer
-    movq %rax, -16(%rbp) # save renderer pointer
+    movq %rax, game_ren(%rip) # save renderer pointer
 
     # check for error (NULL is error)
     cmpq $0, %rax
-    jne call_game_loop # if success, jump to game loop
+    jne init_ttf # if success, jump to TTF init
 
     # SDL_DestroyWindow(win);
-    movq -8(%rbp), %rdi
+    movq game_win(%rip), %rdi
     call SDL_DestroyWindow
     
     call SDL_GetError
@@ -103,31 +115,163 @@ create_renderer:
     movl $1, %eax
     jmp cleanup_exit
 
-call_game_loop:
+init_ttf:
+    call TTF_Init
 
+    cmpl $0, %eax
+    jne make_text_engine
+
+    call SDL_GetError
+    movq %rax, %rsi
+    leaq ttf_init_error(%rip), %rdi
+    movl $0, %eax
+    call printf
+    
+    # SDL_DestroyRenderer(ren);
+    movq game_ren(%rip), %rdi
+    call SDL_DestroyRenderer
+
+    # SDL_DestroyWindow(win);
+    movq game_win(%rip), %rdi
+    call SDL_DestroyWindow
+
+    call SDL_Quit
+
+    # return 1 on error
+    movl $1, %eax
+    jmp cleanup_exit
+
+make_text_engine:
+    movq game_ren(%rip), %rdi
+    call TTF_CreateRendererTextEngine
+    movq %rax, -136(%rbp)
+
+    cmpl $0, %eax
+    jne load_font
+
+    call SDL_GetError
+    movq %rax, %rsi
+    leaq ttf_create_text_engine(%rip), %rdi
+    movl $0, %eax
+    call printf
+
+    # SDL_DestroyRenderer(ren);
+    movq game_ren(%rip), %rdi
+    call SDL_DestroyRenderer
+
+    # SDL_DestroyWindow(win);
+    movq game_win(%rip), %rdi
+    call SDL_DestroyWindow
+
+    call SDL_Quit
+
+    # return 1 on error
+    movl $1, %eax
+    jmp cleanup_exit
+
+load_font:
+    leaq font_path(%rip), %rdi
+    movl font_size(%rip), %eax
+    # convert integer to float
+    cvtsi2ss %eax, %xmm0
+    call TTF_OpenFont
+    movq %rax, game_font(%rip)
+
+    cmpq $0, %rax
+    jne make_text
+
+    call SDL_GetError
+    movq %rax, %rsi
+    leaq ttf_open_font_error(%rip), %rdi
+    movl $0, %eax
+    call printf
+
+    movq -136(%rbp), %rdi
+    call TTF_DestroySurfaceTextEngine
+
+    # SDL_DestroyRenderer(ren);
+    movq game_ren(%rip), %rdi
+    call SDL_DestroyRenderer
+
+    # SDL_DestroyWindow(win);
+    movq game_win(%rip), %rdi
+    call SDL_DestroyWindow
+
+    call TTF_Quit
+    call SDL_Quit
+
+    # return 1 on error
+    movl $1, %eax
+    jmp cleanup_exit
+
+make_text:
+    movq -136(%rbp), %rdi
+    movq game_font(%rip), %rsi
+    movq starter_string(%rip), %rdx
+    movq $0, %rcx
+    call TTF_CreateText
+    movq %rax, game_text(%rip)
+
+    cmpl $0, %eax
+    jne call_game_loop_wait
+
+    call SDL_GetError
+    movq %rax, %rsi
+    leaq ttf_create_text(%rip), %rdi
+    movl $0, %eax
+    call printf
+    
+    movq -136(%rbp), %rdi
+    call TTF_DestroySurfaceTextEngine
+
+    # SDL_DestroyRenderer(ren);
+    movq game_ren(%rip), %rdi
+    call SDL_DestroyRenderer
+
+    # SDL_DestroyWindow(win);
+    movq game_win(%rip), %rdi
+    call SDL_DestroyWindow
+
+    call SDL_Quit
+
+    # return 1 on error
+    movq $1, %rax
+    jmp cleanup_exit
+
+call_game_loop_wait:
     .wait_for_resize:
-        leaq -144(%rbp), %rdi # place to put the SDL_Event
+        leaq -128(%rbp), %rdi # place to put the SDL_Event
         call SDL_PollEvent
         cmpl $0, %eax # check if SDL_PollEvent returned 0 (no event)
         je .wait_for_resize # if no event loop again
 
         # check if the event type is SDL_EVENT_WINDOW_RESIZED
-        cmpl $0x206, -144(%rbp)
+        cmpl $0x206, -128(%rbp)
         jne .wait_for_resize
 
-    movq -8(%rbp), %rdi # window
+    movq game_win(%rip), %rdi # window
     leaq window_width(%rip), %rsi
     leaq window_height(%rip), %rdx
     call SDL_GetWindowSizeInPixels
 
-    movq -16(%rbp), %rdi # renderer
     call game_loop
 
 cleanup:
-    movq -16(%rbp), %rdi
+    movq game_font(%rip), %rdi
+    call TTF_CloseFont
+
+    movq -136(%rbp), %rdi
+    call TTF_DestroySurfaceTextEngine
+
+    movq game_text(%rip), %rdi
+    call TTF_DestroyText
+
+    call TTF_Quit
+
+    movq game_ren(%rip), %rdi
     call SDL_DestroyRenderer
 
-    movq -8(%rbp), %rdi
+    movq game_win(%rip), %rdi
     call SDL_DestroyWindow
 
     call SDL_Quit
