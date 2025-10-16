@@ -3,7 +3,7 @@ samecardcounter: .long 1
 pairs: .long 0
 threeofakind: .long 0
 straight: .long 1
-flush: .long 0
+flush: .long 1
 fullhouse1: .long 0
 fullhouse2: .long 0
 fourofakind: .long 0
@@ -150,6 +150,48 @@ getcardsuit:
         pushq %r10
 
 
+check_straight:
+    movl (%r12), %eax
+
+    divq $13
+    movl %edx, %r13d # get card value
+
+    movq $1, %rcx # indexing from the second card
+
+    straight_loop:
+        movl (%r12, %rcx, 4), %eax
+
+        divq $13
+        subl %edx, %r13d
+        cmpl $rcx, %r13d # second - first has to be 1, third - first has to be 2 and so on
+        jne not_straight
+
+        incq %rcx
+        cmpq $4, %rcx
+        jle straight_loop
+
+    not_straight:
+        movl $0, $straight
+        jmp straight_finish
+
+check_flush:
+    popq %r14
+
+    movl $1, %rcx
+    straight_loop:
+        popq %r15
+
+        cmpq %r14, %r15
+        jne not_flush
+
+        incq %rcx
+        cmpq $4, %rcx
+        jle straight_loop
+        
+
+    not_flush:
+        movl $0, $flush
+        jmp flush_finish
 
 
 get_poker_hand:
@@ -209,6 +251,9 @@ get_poker_hand:
             movl $1, $threeofakind
             movl $1, $fullhouse2
             addq $2, %rbx
+        fourofakindflag:
+            movl $1, $fourofakind
+            jmp hand_is_fourofakind # if we have 4 of a kind we cant get another poker hand
 
 
         incq %rbx
@@ -216,6 +261,46 @@ get_poker_hand:
         cmpq $4, %rbx # continue loop if we must
         jle loop
 
+    end_loop:
+        jmp check_straight
+
+        straight_finish:
+
+        jmp check_flush
+
+        flush_finish:
+
+        cmpl $1, $pairs
+        je hand_is_pair
+
+        cmpl $2, $pairs
+        je hand_is_2pair
+
+        cmpl $1, $threeofakind
+        je hand_is_threeofakind
+
+        cmpl $1, $straight
+        je hand_is_straight
+
+        cmpl $1, $flush
+        je hand_is_flush
+
+        cmpl $1, $fullhouse1
+        je checkfullhouse
+        checkfullhouse:
+            cmpl $1, $fullhouse2
+            je hand_is_fullhouse
+
+        
+
+
+    end_getpokerhand:
+
+        addq $24, %rsp
+
+        movq %rbp, %rsp
+        popq %rbp
+        ret
 
 
 
