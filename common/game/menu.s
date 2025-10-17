@@ -10,13 +10,13 @@
 .button_h: .long 0
 .button_gap: .long 0
 
+play_button: .quad 0
+quit_button: .quad 0
+
 .button_x_percentage: .long 50
-.button_w_percentage: .long 30
+.button_w_percentage: .long 20
 .button_h_percentage: .long 10
 .button_gap_percentage: .long 5
-
-.play_text: .asciz "Play"
-.quit_text: .asciz "Quit"
 
 .section .text
 .global render_menu
@@ -30,6 +30,9 @@ render_menu:
     subq $144, %rsp
     # 16 for menu overlay SDL_FRect (-16 to -1)
     # 128 for the SDL_Event union (-144 to -17)
+
+    pushq %rbx
+    subq $8, %rsp
 
     # calculate button props
     # .button_w
@@ -82,6 +85,42 @@ render_menu:
     addl .button_gap(%rip), %ecx
     movl %ecx, .quit_button_y(%rip)
 
+    # load the play button
+    leaq play_button_path(%rip), %rdi
+    call SDL_LoadBMP
+    movq %rax, play_button(%rip)
+    movq %rax, %rbx # save surface to destroy later
+    
+    movq game_ren(%rip), %rdi
+    movq play_button(%rip), %rsi
+    call SDL_CreateTextureFromSurface
+    movq %rax, play_button(%rip)
+
+    movq play_button(%rip), %rdi
+    movl $0, %esi
+    call SDL_SetTextureScaleMode
+
+    movq %rbx, %rdi
+    call SDL_DestroySurface
+
+    # load the quit button
+    leaq quit_button_path(%rip), %rdi
+    call SDL_LoadBMP
+    movq %rax, quit_button(%rip)
+    movq %rax, %rbx # save surface to destroy later
+    
+    movq game_ren(%rip), %rdi
+    movq quit_button(%rip), %rsi
+    call SDL_CreateTextureFromSurface
+    movq %rax, quit_button(%rip)
+
+    movq quit_button(%rip), %rdi
+    movl $0, %esi
+    call SDL_SetTextureScaleMode
+
+    movq %rbx, %rdi
+    call SDL_DestroySurface
+
     .menu_loop:
         # draw game scene
         movq game_ren(%rip), %rdi
@@ -120,14 +159,6 @@ render_menu:
         call SDL_RenderFillRect
 
         # draw play button
-        # SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
-        movq game_ren(%rip), %rdi
-        movl $0, %esi
-        movl $255, %edx
-        movl $0, %ecx
-        movl $255, %r8d
-        call SDL_SetRenderDrawColor
-
         movl .button_x(%rip), %eax
         cvtsi2ss %eax, %xmm0
         movss %xmm0, -16(%rbp) # x
@@ -146,33 +177,12 @@ render_menu:
         movss %xmm0, -4(%rbp) # h
 
         movq game_ren(%rip), %rdi
-        leaq -16(%rbp), %rsi
-        call SDL_RenderFillRect
-
-        # draw play button text: draw_text(text, .play_text, .button_x, .play_button_y)
-        # SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        movq game_ren(%rip), %rdi
-        movl $0, %esi
-        movl $0, %edx
-        movl $0, %ecx
-        movl $255, %r8d
-        call SDL_SetRenderDrawColor
-
-        # set text
-        leaq .play_text(%rip), %rdi
-        movl .button_x(%rip), %esi
-        movl .play_button_y(%rip), %edx
-        call draw_text
+        movq play_button(%rip), %rsi
+        movq $0, %rdx # we want all of the tile to be rendered
+        leaq -16(%rbp), %rcx # where we want to render it
+        call SDL_RenderTexture
 
         # draw quit button
-        # SDL_SetRenderDrawColor(renderer, 0, 255, 255, 255);
-        movq game_ren(%rip), %rdi
-        movl $0, %esi
-        movl $255, %edx
-        movl $255, %ecx
-        movl $255, %r8d
-        call SDL_SetRenderDrawColor
-
         movl .button_x(%rip), %eax
         cvtsi2ss %eax, %xmm0
         movss %xmm0, -16(%rbp) # x
@@ -191,21 +201,10 @@ render_menu:
         movss %xmm0, -4(%rbp) # h
 
         movq game_ren(%rip), %rdi
-        leaq -16(%rbp), %rsi
-        call SDL_RenderFillRect
-
-        # draw quit button text: draw_text(text, .quit_text, .button_x, .quit_button_y)
-        movq game_ren(%rip), %rdi
-        movl $0, %esi
-        movl $0, %edx
-        movl $0, %ecx
-        movl $255, %r8d
-        call SDL_SetRenderDrawColor
-
-        leaq .quit_text(%rip), %rdi
-        movl .button_x(%rip), %esi
-        movl .quit_button_y(%rip), %edx
-        call draw_text
+        movq quit_button(%rip), %rsi
+        movq $0, %rdx # we want all of the tile to be rendered
+        leaq -16(%rbp), %rcx # where we want to render it
+        call SDL_RenderTexture
 
         # reset opacity blend
         # SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
@@ -293,6 +292,8 @@ render_menu:
         jmp .menu_loop
     
     .menu_loop_end:
+        addq $8, %rsp
+        popq %rbx
         addq $144, %rsp # deallocate stack space
         movq %rbp, %rsp
         popq %rbp
