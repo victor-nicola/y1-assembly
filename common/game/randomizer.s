@@ -1,15 +1,21 @@
 .data
 samecardcounter: .long 1
-pairs: .long 0
-threeofakind: .long 0
+# pairs: .long 0 # -- DEPRECATED --
+# threeofakind: .long 0 # -- DEPRECATED --
+group1_size: .long 0
+group2_size: .long 0
 straight: .long 1
 flush: .long 1
-fullhouse1: .long 0
-fullhouse2: .long 0
+# fullhouse1: .long 0 # -- DEPRECATED --
+# fullhouse2: .long 0 # -- DEPRECATED --
 fourofakind: .long 0
+straightflush: .long 0
+royalflush: .long 0
 
 
-fmt: .asciz "%u %u %u %u %u \n" 
+fmt: .asciz "%u %u %u %u %u \n"
+handfmt: .asciz "Hand Detected (0=High Card, 1=Pair, 9=Royal Flush): %u\n"
+
 
 .text
 .global main
@@ -95,8 +101,8 @@ rand5_unique_sorted:
         outer_sort_loop:
             xorq %rcx, %rcx # j = 0
             inner_sort_loop:
-                movl 4(%r12, %rcx, 4), %edx # array[i] -> edx
-                movl (%r12, %rcx, 4), %eax # array[i+1] -> eax
+                movl 4(%r12, %rcx, 4), %edx # array[j+1] -> edx
+                movl (%r12, %rcx, 4), %eax # array[j] -> eax
 
                 cmpl %edx, %eax
                 jl no_swap
@@ -128,6 +134,7 @@ rand5_unique_sorted:
     ret
 
 getcardsuit:
+    # input in %eax (1-52), returns suit (1-4) in %eax
     cmpl $14, %eax
     jl clubs
     cmpl $27, %eax
@@ -137,199 +144,269 @@ getcardsuit:
     jmp spades
 
     clubs:
-        movq $1, %r10
-        pushq %r10
+        movl $1, %eax
+        ret
     diamonds:
-        movq $2, %r10
-        pushq %r10
+        movl $2, %eax
+        ret
     hearts:
-        movq $3, %r10
-        pushq %r10
+        movl $3, %eax
+        ret
     spades:
-        movq $4, %r10
-        pushq %r10
-
+        movl $4, %eax
+        ret
 
 check_straight:
-    movl (%r12), %eax
-
-    divq $13
-    movl %edx, %r13d # get card value
-
+    # input: %r13 points to the sorted RANK array
+    movl $1, straight(%rip)
+    movl (%r13), %eax # get rank of first card
+    
     movq $1, %rcx # indexing from the second card
-
     straight_loop:
-        movl (%r12, %rcx, 4), %eax
-
-        divq $13
-        subl %edx, %r13d
-        cmpl $rcx, %r13d # second - first has to be 1, third - first has to be 2 and so on
+        movl (%r13, %rcx, 4), %edx # get rank of current card
+        
+        movl %eax, %ebx
+        addl %ecx, %ebx # expected rank = rank of first card + index
+        cmpl %ebx, %edx 
         jne not_straight
 
         incq %rcx
-        cmpq $4, %rcx
-        jle straight_loop
-
-    not_straight:
-        movl $0, $straight
+        cmpq $5, %rcx
+        jl straight_loop
         jmp straight_finish
 
+    not_straight:
+        movl $0, straight(%rip)
+    straight_finish:
+        ret
+
 check_flush:
-    popq %r14
+    # input: %r12 points to the original sorted card array
+    movl $1, flush(%rip)
+    movl (%r12), %eax
+    call getcardsuit
+    movl %eax, %r14d # Suit of first card
 
-    movl $1, %rcx
-    straight_loop:
-        popq %r15
+    movq $1, %rcx
+    flush_loop:
+        movl (%r12, %rcx, 4), %eax
+        call getcardsuit # Suit of current card in %eax
 
-        cmpq %r14, %r15
+        cmpl %eax, %r14d
         jne not_flush
 
         incq %rcx
-        cmpq $4, %rcx
-        jle straight_loop
-        
+        cmpq $5, %rcx
+        jl flush_loop
+        jmp flush_finish
 
     not_flush:
-        movl $0, $flush
-        jmp flush_finish
+        movl $0, flush(%rip)
+    flush_finish:
+        ret
 
 
 get_poker_hand:
     pushq %rbp
     movq %rsp, %rbp
+    pushq %rbx
+    pushq %r12 
+    pushq %r13
+    pushq %r14
 
-    subq $24, %rsp
+    subq $64, %rsp # 20 for original cards, 20 for ranks, padding
 
-    leaq (%rsp), %rdi
-    call rand5_unique_sorted # get cards
+    leaq 24(%rsp), %rdi
+    call rand5_unique_sorted 
 
-    movq %rax, %r12 # save array pointer for cards in a temp register
+    movq %rax, %r12 # r12 has original sorted cards (1-52)
 
-    xorq %rax, %rax # zero out rax 
+    leaq fmt(%rip), %rdi     
+    movl (%r12), %esi        
+    movl 4(%r12), %edx       
+    movl 8(%r12), %ecx       
+    movl 12(%r12), %r8d      
+    movl 16(%r12), %r9d      
+    xorl  %eax, %eax          
+    call printf
+
+    # Create and sort the rank-only array
+    leaq (%rsp), %r13 # r13 will point to the rank array
+    xorq %rbx, %rbx
+    create_rank_array_loop:
+        movl (%r12, %rbx, 4), %eax # Get card number
+        movl $13, %ecx
+        xorl %edx, %edx
+        divl %ecx
+        movl %edx, (%r13, %rbx, 4) # Store rank in new array
+        incq %rbx
+        cmpq $5, %rbx
+        jl create_rank_array_loop
+
+    # Bubble sort the rank array in r13
+    xorq %rbx, %rbx 
+    rank_sort_outer:
+        xorq %rcx, %rcx 
+        rank_sort_inner:
+            movl 4(%r13, %rcx, 4), %edx 
+            movl (%r13, %rcx, 4), %eax 
+            cmpl %edx, %eax
+            jl rank_no_swap
+            movl %edx, (%r13, %rcx, 4)
+            movl %eax, 4(%r13, %rcx, 4)
+        rank_no_swap:
+            incl %ecx
+            cmpl $4, %ecx
+            jl rank_sort_inner
+        incl %ebx
+        cmpl $4, %ebx
+        jl rank_sort_outer
+
+    # Reset group sizes and evaluate using the RANK array in r13
+    movl $0, group1_size(%rip)
+    movl $0, group2_size(%rip)
 
     xorq %rbx, %rbx # i = 0
-
-    loop:
-        movl (%r12, %rbx, 4), %eax # get first card (1-52)
-        jmp getcardsuit # gets the suit of every card generated
-
-        divq $13
-        movl %edx, %eax # gets the card value (0-12, where 0 is king)
-
-        movl %eax, %r13d
+    pair_check_loop:
+        movl $1, samecardcounter(%rip)
+        movl (%r13, %rbx, 4), %r14d # Get rank of card i
 
         movq %rbx, %rcx
         incq %rcx # j = i + 1
-
-        movl $0, $samecardcounter
-        same_counter:
-            movl (%r12, %rcx, 4), %eax  # load 2nd card
-            divq $13 
-            movl %edx, %eax # get card value 
-            cmpl %r13d, %eax # compare card values
-            jne continue_loop
-            count:
-                incl $samecardcounter # increase the amount of same cards
-                incq %rcx # go to next card
-                jmp same_counter
-    continue_loop:
-        cmpl $2, $samecardcounter
-        je pairsflag
-        cmpl $3, $samecardcounter
-        je threeofakindflag
-        cmpl $4, $samecardcounter
-        je fourofakindflag
-
-        pairsflag:
-            incl $pairs
-            movl $1, $fullhouse1
-            addq $1, %rbx
-            # the pair 
-            # in case we only have 2 same cards one after another 
-            # we can skip the second card and go straight to the third 
-        threeofakindflag:
-            movl $1, $threeofakind
-            movl $1, $fullhouse2
-            addq $2, %rbx
-        fourofakindflag:
-            movl $1, $fourofakind
-            jmp hand_is_fourofakind # if we have 4 of a kind we cant get another poker hand
-
-
-        incq %rbx
-
-        cmpq $4, %rbx # continue loop if we must
-        jle loop
-
-    end_loop:
-        jmp check_straight
-
-        straight_finish:
-
-        jmp check_flush
-
-        flush_finish:
-
-        cmpl $1, $pairs
-        je hand_is_pair
-
-        cmpl $2, $pairs
-        je hand_is_2pair
-
-        cmpl $1, $threeofakind
-        je hand_is_threeofakind
-
-        cmpl $1, $straight
-        je hand_is_straight
-
-        cmpl $1, $flush
-        je hand_is_flush
-
-        cmpl $1, $fullhouse1
-        je checkfullhouse
-        checkfullhouse:
-            cmpl $1, $fullhouse2
-            je hand_is_fullhouse
-
         
+        inner_pair_check_loop:
+            cmpq $5, %rcx
+            jge end_inner_pair_loop
 
+            movl (%r13, %rcx, 4), %eax # Get rank of card j
+            cmpl %r14d, %eax
+            jne end_inner_pair_loop 
 
-    end_getpokerhand:
-
-        addq $24, %rsp
-
-        movq %rbp, %rsp
-        popq %rbp
-        ret
-
-
-
-
+            incl samecardcounter(%rip)
+            incq %rcx
+            jmp inner_pair_check_loop
     
+    end_inner_pair_loop:
+        # Update group sizes
+        movl samecardcounter(%rip), %eax
+        movl group1_size(%rip), %ecx
+        cmpl %ecx, %eax
+        jle check_group2
+        movl %ecx, group2_size(%rip)
+        movl %eax, group1_size(%rip)
+        jmp continue_pair_loop
+    check_group2:
+        movl group2_size(%rip), %ecx
+        cmpl %ecx, %eax
+        jle continue_pair_loop
+        movl %eax, group2_size(%rip)
 
+    continue_pair_loop:
+        movl samecardcounter(%rip), %eax
+        addq %rax, %rbx 
+        cmpq $5, %rbx
+        jl pair_check_loop
+
+    end_pair_check_loop:
+        call check_straight # Must use RANK array, so r13 is implicitly used
+        call check_flush    # Must use ORIGINAL array, so r12 is implicitly used
+
+    # Final Hand Evaluation
+    movl $0, %eax # Default to high card
+    
+    movl group1_size(%rip), %ecx
+    cmpl $4, %ecx
+    je hand_is_fourofakind
+    
+    movl group2_size(%rip), %edx
+    cmpl $3, %ecx
+    je is_group1_three
+    cmpl $2, %ecx
+    je is_group1_two
+    jmp check_straights_and_flushes 
+
+is_group1_three: 
+    cmpl $2, %edx
+    je hand_is_fullhouse
+    jmp hand_is_threeofakind
+
+is_group1_two: 
+    cmpl $2, %edx
+    je hand_is_2pair
+    jmp hand_is_pair
+
+check_straights_and_flushes:
+    movl flush(%rip), %ecx
+    cmpl $1, %ecx
+    je hand_is_flush_or_better
+
+    movl straight(%rip), %ecx
+    cmpl $1, %ecx
+    je hand_is_straight
+    jmp end_getpokerhand
+
+hand_is_flush_or_better:
+    movl straight(%rip), %ecx
+    cmpl $1, %ecx
+    jne hand_is_flush
+    
+    movl (%r13), %eax # Check lowest RANK for royal flush
+    cmpl $1, %eax # Rank 1 is Ace
+    je hand_is_royalflush
+    
+    movl $8, %eax
+    jmp end_getpokerhand
+
+hand_is_pair:
+    movl $1, %eax
+    jmp end_getpokerhand
+hand_is_2pair:
+    movl $2, %eax
+    jmp end_getpokerhand
+hand_is_threeofakind:
+    movl $3, %eax
+    jmp end_getpokerhand
+hand_is_straight:
+    movl $4, %eax
+    jmp end_getpokerhand
+hand_is_flush:
+    movl $5, %eax
+    jmp end_getpokerhand
+hand_is_fullhouse:
+    movl $6, %eax
+    jmp end_getpokerhand
+hand_is_fourofakind:
+    movl $7, %eax
+    jmp end_getpokerhand
+hand_is_royalflush:
+    movl $9, %eax
+
+end_getpokerhand:
+    addq $64, %rsp
+    popq %r14
+    popq %r13
+    popq %r12
+    popq %rbx
+    movq %rbp, %rsp
+    popq %rbp
+    ret
 
 main:
     pushq %rbp
     movq %rsp, %rbp
+    subq $8, %rsp # Align stack for call
 
-    subq $24, %rsp
+    call get_poker_hand
 
-    leaq (%rsp), %rdi
-    call rand5_unique_sorted
-
-    leaq fmt(%rip), %rdi     # 1st arg: pointer to format string
-    movl (%rax), %esi        # 2nd arg: nums[0]
-    movl 4(%rax), %edx       # 3rd arg: nums[1]
-    movl 8(%rax), %ecx       # 4th arg: nums[2]
-    movl 12(%rax), %r8d      # 5th arg: nums[3]
-    movl 16(%rax), %r9d      # 6th arg: nums[4]
-    xor  %eax, %eax          # required: # of FP args in varargs (0)
+    leaq handfmt(%rip), %rdi
+    movq %rax, %rsi
+    xorl %eax, %eax
     call printf
 
     xorq %rax, %rax
 
-    addq $24, %rsp
-
+    addq $8, %rsp
     movq %rbp, %rsp
     popq %rbp
+    ret
 
