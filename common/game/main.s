@@ -18,10 +18,29 @@ otto_tower_path: .asciz "./assets/towers/otto.bmp"
 arash_tower_path: .asciz "./assets/towers/arash.bmp"
 stefan_tower_path: .asciz "./assets/towers/stefan.bmp"
 victor_tower_path: .asciz "./assets/towers/victor.bmp"
+
+tiles_paths: .quad grass_tile_path
+             .quad path_tile_path
+             .quad otto_tower_path
+             .quad arash_tower_path
+             .quad victor_tower_path
+             .quad stefan_tower_path
+             .quad base_tile_path
+
 eugenia_path: .asciz "./assets/eugenia.bmp"
 play_button_path: .asciz "./assets/menu-buttons/play.bmp"
 quit_button_path: .asciz "./assets/menu-buttons/exit.bmp"
 menu_path: .asciz "./assets/menu-buttons/menu.bmp"
+
+otto_cursor_path: .asciz "./assets/cursors/otto.bmp"
+arash_cursor_path: .asciz "./assets/cursors/arash.bmp"
+victor_cursor_path: .asciz "./assets/cursors/victor.bmp"
+stefan_cursor_path: .asciz "./assets/cursors/stefan.bmp"
+
+cursors_paths: .quad otto_cursor_path
+               .quad arash_cursor_path
+               .quad victor_cursor_path
+               .quad stefan_cursor_path
 
 debug_string: .asciz "%d\n"
 starter_string: .asciz ""
@@ -31,13 +50,8 @@ window_height: .long 0
 .global window_width
 .global window_height
 .global debug_string
-.global grass_tile_path
-.global path_tile_path
-.global base_tile_path
-.global otto_tower_path
-.global arash_tower_path
-.global stefan_tower_path
-.global victor_tower_path
+.global tiles_paths
+.global cursors_paths
 .global eugenia_path
 .global play_button_path
 .global quit_button_path
