@@ -9,15 +9,15 @@ ttf_open_font_error: .asciz "TTF_OpenFont Error: %s\n"
 ttf_create_text_engine: .asciz "TTF_CreateRendererTextEngine Error: %s\n"
 ttf_create_text: .asciz "TTF_CreateText Error: %s\n"
 window_title: .asciz "Assembly Game!"
-font_path: .asciz "./assets/fonts/PixelatedEleganceRegular-ovyAA.ttf"
+font_path: .asciz "../assets/fonts/PixelatedEleganceRegular-ovyAA.ttf"
 font_size: .long 20
-grass_tile_path: .asciz "./assets/map-tiles/grass.bmp"
-path_tile_path: .asciz "./assets/map-tiles/path.bmp"
-base_tile_path: .asciz "./assets/towers/eemcs.bmp"
-otto_tower_path: .asciz "./assets/towers/otto.bmp"
-arash_tower_path: .asciz "./assets/towers/arash.bmp"
-stefan_tower_path: .asciz "./assets/towers/stefan.bmp"
-victor_tower_path: .asciz "./assets/towers/victor.bmp"
+grass_tile_path: .asciz "../assets/map-tiles/grass.bmp"
+path_tile_path: .asciz "../assets/map-tiles/path.bmp"
+base_tile_path: .asciz "../assets/towers/eemcs.bmp"
+otto_tower_path: .asciz "../assets/towers/otto.bmp"
+arash_tower_path: .asciz "../assets/towers/arash.bmp"
+stefan_tower_path: .asciz "../assets/towers/stefan.bmp"
+victor_tower_path: .asciz "../assets/towers/victor.bmp"
 
 tiles_paths: .quad grass_tile_path
              .quad path_tile_path
@@ -27,15 +27,15 @@ tiles_paths: .quad grass_tile_path
              .quad stefan_tower_path
              .quad base_tile_path
 
-eugenia_path: .asciz "./assets/eugenia.bmp"
-play_button_path: .asciz "./assets/menu-buttons/play.bmp"
-quit_button_path: .asciz "./assets/menu-buttons/exit.bmp"
-menu_path: .asciz "./assets/menu-buttons/menu.bmp"
+eugenia_path: .asciz "../assets/eugenia.bmp"
+play_button_path: .asciz "../assets/menu-buttons/play.bmp"
+quit_button_path: .asciz "../assets/menu-buttons/exit.bmp"
+menu_path: .asciz "../assets/menu-buttons/menu.bmp"
 
-otto_cursor_path: .asciz "./assets/cursors/otto.bmp"
-arash_cursor_path: .asciz "./assets/cursors/arash.bmp"
-victor_cursor_path: .asciz "./assets/cursors/victor.bmp"
-stefan_cursor_path: .asciz "./assets/cursors/stefan.bmp"
+otto_cursor_path: .asciz "../assets/cursors/otto.bmp"
+arash_cursor_path: .asciz "../assets/cursors/arash.bmp"
+victor_cursor_path: .asciz "../assets/cursors/victor.bmp"
+stefan_cursor_path: .asciz "../assets/cursors/stefan.bmp"
 
 cursors_paths: .quad otto_cursor_path
                .quad arash_cursor_path

@@ -451,6 +451,9 @@ game_loop:
             # the key value is stored with a 28 byte offset from the SDL_Event address
             movl -100(%rbp), %eax # get key code
 
+            cmpb $-1, -129(%rbp) # if already holding a tower block tower changing (remove if all towers cost the same)
+            jne .test_reset_place_tower
+
             cmpl $0x0000006f, %eax # if o key was pressed
             je .place_otto_init
 
@@ -463,19 +466,20 @@ game_loop:
             cmpl $0x00000073, %eax # if s key was pressed
             je .place_stefan_init
 
-            cmpl $0x0000001b, %eax # if esc key was pressed
-            jne .render_frame
+            .test_reset_place_tower:
+                cmpl $0x0000001b, %eax # if esc key was pressed
+                jne .render_frame
 
-            cmpb $-1, -129(%rbp)
-            jne .reset_place_tower
+                cmpb $-1, -129(%rbp)
+                jne .reset_place_tower
 
-            movq %r15, %rdi
-            call render_menu
+                movq %r15, %rdi
+                call render_menu
 
-            cmpq $-1, %rax # if we need to quit the game
-            je .game_loop_cleanup
+                cmpq $-1, %rax # if we need to quit the game
+                je .game_loop_cleanup
 
-            jmp .render_frame
+                jmp .render_frame
 
         .place_otto_init:
             movq $TILE_OTTO, %rax
