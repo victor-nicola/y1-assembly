@@ -1,24 +1,23 @@
+.section .note.GNU-stack,"",@progbits
 .data
 samecardcounter: .long 1
-# pairs: .long 0 # -- DEPRECATED --
-# threeofakind: .long 0 # -- DEPRECATED --
 group1_size: .long 0
 group2_size: .long 0
 straight: .long 1
 flush: .long 1
-# fullhouse1: .long 0 # -- DEPRECATED --
-# fullhouse2: .long 0 # -- DEPRECATED --
 fourofakind: .long 0
 straightflush: .long 0
 royalflush: .long 0
 
 
 fmt: .asciz "%u %u %u %u %u \n"
+bmpfmt: .asciz "../assets/cards/%u.bmp"
 handfmt: .asciz "Hand Detected (0=High Card, 1=Pair, 9=Royal Flush): %u\n"
 
 
 .text
 .global main
+.extern render_hand
 
 rand52:
     pushq %rbp
@@ -214,27 +213,38 @@ get_poker_hand:
     pushq %r13
     pushq %r14
 
-    subq $64, %rsp # 20 for original cards, 20 for ranks, padding
+    subq $104, %rsp # 40 for strings, 20 for original, 20 for ranks, padding
 
-    leaq 24(%rsp), %rdi
+    leaq -40(%rbp), %rdi
     call rand5_unique_sorted 
 
     movq %rax, %r12 # r12 has original sorted cards (1-52)
 
-    leaq fmt(%rip), %rdi     
-    movl (%r12), %esi        
-    movl 4(%r12), %edx       
-    movl 8(%r12), %ecx       
-    movl 12(%r12), %r8d      
-    movl 16(%r12), %r9d      
-    xorl  %eax, %eax          
-    call printf
+    # Loop to create filenames with sprintf
+    xorq %rbx, %rbx
+    sprintf_loop:
+        movq %rbx, %rdi
+        imulq $8, %rdi
+        addq %rsp, %rdi         # Arg 1: Destination buffer for string
+        leaq bmpfmt(%rip), %rsi # Arg 2: Format string
+        movl (%r12, %rbx, 4), %edx      # Arg 3: Card number
+        xorl %eax, %eax
+        call sprintf
+        incq %rbx
+        cmpq $5, %rbx
+        jl sprintf_loop
+
+    movq %rsp, %rdi
+    call render_hand
+
+    movq %rax, %r15
 
     # Create and sort the rank-only array
-    leaq (%rsp), %r13 # r13 will point to the rank array
+    leaq -60(%rbp), %r13 # r13 will point to the rank array
     xorq %rbx, %rbx
     create_rank_array_loop:
         movl (%r12, %rbx, 4), %eax # Get card number
+        subl $1, %eax
         movl $13, %ecx
         xorl %edx, %edx
         divl %ecx
@@ -381,8 +391,8 @@ hand_is_fourofakind:
 hand_is_royalflush:
     movl $9, %eax
 
-end_getpokerhand:
-    addq $64, %rsp
+end_getpoker_hand:
+    addq $104, %rsp
     popq %r14
     popq %r13
     popq %r12
@@ -390,23 +400,3 @@ end_getpokerhand:
     movq %rbp, %rsp
     popq %rbp
     ret
-
-main:
-    pushq %rbp
-    movq %rsp, %rbp
-    subq $8, %rsp # Align stack for call
-
-    call get_poker_hand
-
-    leaq handfmt(%rip), %rdi
-    movq %rax, %rsi
-    xorl %eax, %eax
-    call printf
-
-    xorq %rax, %rax
-
-    addq $8, %rsp
-    movq %rbp, %rsp
-    popq %rbp
-    ret
-
