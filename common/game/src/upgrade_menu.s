@@ -18,11 +18,11 @@
 .extern .card_w
 .extern .card_h
 
-close_button_path: .asciz "upgrade-menu-buttons/close_icon.bmp"
-upgrade_button_path: .asciz "upgrade-menu-buttons/upgrade-button.bmp"
-upgrade1_path:     .asciz "upgrade-menu-buttons/upgrade1.bmp" 
-upgrade2_path:     .asciz "upgrade-menu-buttons/upgrade2.bmp" 
-upgrade3_path:     .asciz "upgrade-menu-buttons/upgrade3.bmp" 
+close_button_path: .asciz "../upgrade-menu-buttons/close_icon.bmp"
+upgrade_button_path: .asciz "../upgrade-menu-buttons/upgrade-button.bmp"
+upgrade1_path:     .asciz "../upgrade-menu-buttons/upgrade1.bmp" 
+upgrade2_path:     .asciz "../upgrade-menu-buttons/upgrade2.bmp" 
+upgrade3_path:     .asciz "../upgrade-menu-buttons/upgrade3.bmp" 
 
 ## Panel and Button properties
 .menu_w: .long 960
@@ -37,8 +37,8 @@ upgrade3_path:     .asciz "upgrade-menu-buttons/upgrade3.bmp"
 .close_button_x: .long 0
 .close_button_y: .long 0
 
-.upgrade_button_w: .long 64
-.upgrade_button_h: .long 32
+.upgrade_button_w: .long 256
+.upgrade_button_h: .long 64
 .upgrade_button_x: .long 0
 .upgrade_button_y: .long 0
 
@@ -48,7 +48,7 @@ upgrade_menu_texture: .quad 0
 
 # --- POKER STATE VARIABLES ---
 poker_textures_addr: .quad 0  # Base address of the 5 texture pointers (card1 address)
-poker_end_time: .long 0       # SDL_GetTicks() + 5000
+poker_end_time: .long 0       # SDL_GetTicks() + 3000
 poker_state: .long 0          # 0=Menu, 1=Poker Display Active, 2=Score Processing
 poker_hand_score: .long 0     # The score (0-9)
 # ----------------------------
