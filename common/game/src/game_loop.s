@@ -3,26 +3,29 @@
 
 .section .data
 .equ TILE_GRASS, 0
-.equ TILE_PATH, 1
+.equ TILE_DOWN, 1
 .equ TILE_OTTO, 2
 .equ TILE_ARASH, 3
 .equ TILE_VICTOR, 4
 .equ TILE_STEFAN, 5
 .equ TILE_BASE, 6
 .equ TILE_BLOCKED, 7
+.equ TILE_RIGHT, 11
+.equ TILE_LEFT, 12
+.equ TILE_STOP, 13
 
 .equ GRID_COLS, 16
 .equ GRID_ROWS, 9
 .equ MAP_SIZE, (GRID_COLS * GRID_ROWS)
 MAP_GRID:
-    .byte TILE_GRASS, TILE_GRASS, TILE_PATH,  TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS
-    .byte TILE_GRASS, TILE_GRASS, TILE_PATH,  TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS
-    .byte TILE_GRASS, TILE_GRASS, TILE_PATH,  TILE_PATH,  TILE_PATH,  TILE_PATH,  TILE_PATH,  TILE_PATH,  TILE_PATH,  TILE_PATH,  TILE_PATH,  TILE_PATH,  TILE_PATH,  TILE_PATH,  TILE_GRASS, TILE_GRASS
-    .byte TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_PATH,  TILE_GRASS, TILE_GRASS
-    .byte TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_PATH,  TILE_GRASS, TILE_GRASS
-    .byte TILE_GRASS, TILE_GRASS, TILE_PATH,  TILE_PATH,  TILE_PATH,  TILE_PATH,  TILE_PATH,  TILE_PATH,  TILE_PATH,  TILE_PATH,  TILE_PATH,  TILE_PATH,  TILE_PATH,  TILE_PATH,  TILE_GRASS, TILE_GRASS
-    .byte TILE_GRASS, TILE_GRASS, TILE_PATH,  TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS
-    .byte TILE_GRASS, TILE_GRASS, TILE_PATH,  TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS
+    .byte TILE_GRASS, TILE_GRASS, TILE_DOWN,  TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS
+    .byte TILE_GRASS, TILE_GRASS, TILE_DOWN,  TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS
+    .byte TILE_GRASS, TILE_GRASS, TILE_RIGHT, TILE_RIGHT, TILE_RIGHT, TILE_RIGHT, TILE_RIGHT, TILE_RIGHT, TILE_RIGHT, TILE_RIGHT, TILE_RIGHT, TILE_RIGHT, TILE_RIGHT, TILE_DOWN,  TILE_GRASS, TILE_GRASS
+    .byte TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_DOWN,  TILE_GRASS, TILE_GRASS
+    .byte TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_DOWN,  TILE_GRASS, TILE_GRASS
+    .byte TILE_GRASS, TILE_GRASS, TILE_DOWN,  TILE_LEFT,  TILE_LEFT,  TILE_LEFT,  TILE_LEFT,  TILE_LEFT,  TILE_LEFT,  TILE_LEFT,  TILE_LEFT,  TILE_LEFT,  TILE_LEFT,  TILE_LEFT,  TILE_GRASS, TILE_GRASS
+    .byte TILE_GRASS, TILE_GRASS, TILE_DOWN,  TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS
+    .byte TILE_GRASS, TILE_GRASS, TILE_STOP,  TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS
     .byte TILE_GRASS, TILE_GRASS, TILE_BASE,  TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS, TILE_GRASS
 
 .equ TOWER_Y_CENTER_BMP, 32
@@ -36,23 +39,43 @@ tiles: .quad 0
        .quad 0
        .quad 0
 
-tile_width: .long 0
-tile_height: .long 0
+tile_width: .float 0
+tile_height: .float 0
 
-tower_h: .long 0
+tower_h: .float 0
 
-base_w: .long 0
-base_h: .long 0
+base_w: .float 0
+base_h: .float 0
 
-base_w_percentage: .long 150
-base_h_percentage: .long 150
+base_w_percentage: .float 1.5
+base_h_percentage: .float 1.5
 
 cursor_surface: .long 0
 cursor: .long 0
 
+mob_h: .float 0
+mob_w: .float 0
+mob_h_center: .float 0
+mob_w_center: .float 0
+mob_h_percentage: .float 0.75
+mob_w_percentage: .float 0.75
+
 .section .text
 .global game_loop
 .global render_scene
+.global tile_width
+.global tile_height
+.global mob_h
+.global mob_w
+.global mob_h_center
+.global mob_w_center
+.global GRID_COLS
+.global GRID_ROWS
+.global MAP_GRID
+.global TILE_STOP
+.global TILE_LEFT
+.global TILE_RIGHT
+.global TILE_DOWN
 
 render_scene:
     pushq %rbp
@@ -65,12 +88,10 @@ render_scene:
     subq $48, %rsp
     # 16 for the sprite props (-16 to -1)
     # 8 for the base pos (-24 to -17)
-    # 1 for flag parameter (-25)
     # 4 for tower height (-29 to -26)
     # 4 for aux height (-33 to -30)
     # 4 for aux y (-37 to -34)
     # 1 for tower code (-38)
-    movb %dil, -25(%rbp)
     movl $0, -33(%rbp)
     movl $0, -37(%rbp)
 
@@ -79,16 +100,13 @@ render_scene:
     movq game_ren(%rip), %rdi
     call SDL_RenderClear
 
-    movslq tile_width(%rip), %rax
-    cvtsi2ss %rax, %xmm0
+    movss tile_width(%rip), %xmm0
     movss %xmm0, -8(%rbp) # w
     
-    movslq tile_height(%rip), %rax
-    cvtsi2ss %rax, %xmm0
+    movss tile_height(%rip), %xmm0
     movss %xmm0, -4(%rbp) # h
     
-    movslq tile_height(%rip), %rax
-    cvtsi2ss %rax, %xmm1
+    movss tile_height(%rip), %xmm1
     movq $2, %rax
     cvtsi2ss %rax, %xmm0
     mulss %xmm0, %xmm1
@@ -119,12 +137,28 @@ render_scene:
 
             continue_testing:
                 cmpb $TILE_BLOCKED, %al
-                je draw_blocked
+                je draw_grass
+
+                cmpb $TILE_LEFT, %al
+                je draw_path
+
+                cmpb $TILE_RIGHT, %al
+                je draw_path
+
+                cmpb $TILE_DOWN, %al
+                je draw_path
+
+                cmpb $TILE_STOP, %al
+                je draw_path
 
                 movq tiles(, %rax, 8), %rsi
                 jmp render_texture
-            
-            draw_blocked:
+
+            draw_path:
+                movq tiles + (8 * TILE_DOWN)(%rip), %rsi
+                jmp render_texture
+
+            draw_grass:
                 movq tiles + (8 * TILE_GRASS)(%rip), %rsi
                 jmp render_texture
 
@@ -153,11 +187,11 @@ render_scene:
 
             draw_base:
                 # save base position
-                movl -16(%rbp), %eax
-                movl %eax, -24(%rbp)
+                movss -16(%rbp), %xmm0
+                movss %xmm0, -24(%rbp)
 
-                movl -12(%rbp), %eax
-                movl %eax, -20(%rbp)
+                movss -12(%rbp), %xmm0
+                movss %xmm0, -20(%rbp)
 
                 movq tiles + (8 * TILE_GRASS)(%rip), %rsi
                 jmp render_texture
@@ -199,116 +233,85 @@ render_scene:
         cmpb $GRID_ROWS, %r12b
         jl .row_loop
 
-    cmpb $1, -25(%rbp)
-    je .draw_plus_row
-
-    cmpb $2, -25(%rbp)
-    je .draw_plus_col
-
-    cmpb $3, -25(%rbp)
-    je .draw_plus_row
-
-    jmp .render_base_tile
-
-    .draw_plus_row:
-        movq $0, %r13 # col
-        movl $GRID_ROWS, %eax
-        movq $0, %rdx
-        mull tile_height(%rip)
-        cvtsi2ss %rax, %xmm0
-        movss %xmm0, -12(%rbp) # y
-        movl $0, -16(%rbp) # x
-        movslq tile_width(%rip), %rax # w
-        cvtsi2ss %rax, %xmm0
-        movss %xmm0, -8(%rbp)
-        movslq tile_height(%rip), %rax # h
-        cvtsi2ss %rax, %xmm0
-        movss %xmm0, -4(%rbp)
-
-        .draw_plus_row_loop:
-            movq game_ren(%rip), %rdi
-            movq tiles + (8 * TILE_GRASS)(%rip), %rsi
-            movq $0, %rdx # we want all of the tile to be rendered
-            leaq -16(%rbp), %rcx # where we want to render it
-            call SDL_RenderTexture
-
-            incq %r13 # update column
-            movslq tile_width(%rip), %rax # update x
-            cvtsi2ss %rax, %xmm0
-            movss -16(%rbp), %xmm1
-            addss %xmm1, %xmm0
-            movss %xmm0, -16(%rbp)
-
-            cmpb $GRID_COLS, %r13b
-            jl .draw_plus_row_loop
-        
-        cmpb $3, -25(%rbp)
-        jne .render_base_tile
+    # get base position
+    movss -24(%rbp), %xmm0
+    movss %xmm0, -16(%rbp)
     
-    .draw_plus_col:
-        movq $0, %r12 # row
-        movl $0, -12(%rbp) # y
-        movl $GRID_COLS, %eax # x
-        movq $0, %rdx
-        mull tile_width(%rip)
-        movl %eax, -16(%rbp)
-        movslq tile_width(%rip), %rax # w
-        cvtsi2ss %rax, %xmm0
-        movss %xmm0, -8(%rbp)
-        movslq tile_height(%rip), %rax # h
-        cvtsi2ss %rax, %xmm0
-        movss %xmm0, -4(%rbp)
+    movss base_w(%rip), %xmm0
+    movl $2, %eax
+    cvtsi2ss %eax, %xmm1
+    divss %xmm1, %xmm0
+    
+    movss tile_width(%rip), %xmm2
+    movl $2, %eax
+    cvtsi2ss %eax, %xmm1
+    divss %xmm1, %xmm2
 
-        .draw_plus_col_loop:
-            movq game_ren(%rip), %rdi
-            movq tiles + (8 * TILE_GRASS)(%rip), %rsi
-            movq $0, %rdx # we want all of the tile to be rendered
-            leaq -16(%rbp), %rcx # where we want to render it
-            call SDL_RenderTexture
+    movss -16(%rbp), %xmm3
+    subss %xmm0, %xmm3
+    addss %xmm2, %xmm3
+    movss %xmm3, -16(%rbp)
 
-            incq %r12 # update row
-            movslq tile_height(%rip), %rax # update y
-            cvtsi2ss %rax, %xmm0
-            movss -12(%rbp), %xmm1
-            addss %xmm1, %xmm0
-            movss %xmm0, -12(%rbp)
+    movss tile_height(%rip), %xmm0
+    movss -20(%rbp), %xmm1
+    addss %xmm1, %xmm0
+    movss base_h(%rip), %xmm2
+    subss %xmm2, %xmm0
+    movss %xmm0, -12(%rbp)
 
-            cmpb $GRID_ROWS, %r12b
-            jl .draw_plus_col_loop
+    movss base_w(%rip), %xmm0
+    movss %xmm0, -8(%rbp) # w
+    
+    movss base_h(%rip), %xmm0
+    movss %xmm0, -4(%rbp) # h
 
-    .render_base_tile:
-        # get base position
-        movss -24(%rbp), %xmm0
-        movss %xmm0, -16(%rbp)
-        movl base_w(%rip), %eax
-        shrl $2, %eax
-        cvtsi2ss %eax, %xmm1
-        movss -16(%rbp), %xmm2
-        subss %xmm1, %xmm2
-        movss %xmm2, -16(%rbp)
+    movq game_ren(%rip), %rdi
+    movq tiles + (8 * TILE_BASE)(%rip), %rsi
+    movq $0, %rdx # we want all of the tile to be rendered
+    leaq -16(%rbp), %rcx # where we want to render it
+    call SDL_RenderTexture
 
-        movl tile_height(%rip), %eax
-        cvtsi2ss %eax, %xmm0
-        movss -20(%rbp), %xmm1
-        addss %xmm1, %xmm0
-        movl base_h(%rip), %eax
-        cvtsi2ss %eax, %xmm2
-        subss %xmm2, %xmm0
-        movss %xmm0, -12(%rbp)
+    movl $(WAVE_SIZE - 1), %r12d
+    .render_mobs:
+        # check if mob is alive before rendering
+        movss mob_x(, %r12, 4), %xmm0
+        xorps %xmm1, %xmm1
+        comiss %xmm1, %xmm0
+        jb .skip_dead_mob # skip if mob_x < 0 (dead)
+        
+        # check mob health
+        movzbq mob_health(, %r12, 1), %rax
+        cmpb $0, %al
+        jle .skip_dead_mob # skip if health <= 0 (dead)
+        
+        # draw overlay
+        # SDL_SetRenderDrawColor(renderer, 0, 0, 0, 127);
+        movq game_ren(%rip), %rdi
+        movl $0, %esi
+        movl $0, %edx
+        movl $0, %ecx
+        movl $127, %r8d
+        call SDL_SetRenderDrawColor
 
-        movslq base_w(%rip), %rax
-        cvtsi2ss %rax, %xmm0
+        movss mob_x(, %r12, 4), %xmm0
+        movss %xmm0, -16(%rbp) # x
+        movss mob_y(, %r12, 4), %xmm0
+        movss %xmm0, -12(%rbp) # y
+
+        movss mob_w(%rip), %xmm0
         movss %xmm0, -8(%rbp) # w
         
-        movslq base_h(%rip), %rax
-        cvtsi2ss %rax, %xmm0
+        movss mob_h(%rip), %xmm0
         movss %xmm0, -4(%rbp) # h
 
         movq game_ren(%rip), %rdi
-        movq tiles + (8 * TILE_BASE)(%rip), %rsi
-        movq $0, %rdx # we want all of the tile to be rendered
-        leaq -16(%rbp), %rcx # where we want to render it
-        call SDL_RenderTexture
+        leaq -16(%rbp), %rsi
+        call SDL_RenderFillRect
+
+        .skip_dead_mob:
+            decl %r12d
+            cmpl $0, %r12d
+            jge .render_mobs
 
     addq $48, %rsp
     
@@ -325,48 +328,31 @@ game_loop:
     pushq %rbp
     movq %rsp, %rbp
 
-    subq $136, %rsp
+    subq $144, %rsp
     # 128 for the SDL_Event union (-128 to -1)
     # 1 for is placing tower flag (-129)
     pushq %r14
-    pushq %r15
     pushq %rbx
 
     movq $-1, -129(%rbp)
 
-    # calculate tile width
-    movq $0, %r15
-
-    movq $0, %rdx
-    movslq window_width(%rip), %rax
-    movq $GRID_COLS, %r8
-    divq %r8
-    movl %eax, tile_width(%rip)
-    cmpq $0, %rdx
-    jne .inc_w
-
-    jmp .calc_tile_height
-
-    .inc_w:
-        addq $2, %r15
-
-    .calc_tile_height:
-        # calculate tile height
-        movq $0, %rdx
-        movslq window_height(%rip), %rax
-        movq $GRID_ROWS, %r8
-        divq %r8
-        movl %eax, tile_height(%rip)
-        cmpq $0, %rdx
-        jne .inc_h
-
-        jmp .load_tiles_loop_init
-
-        .inc_h:
-            addq $1, %r15
+    # calculate tile height
+    movl window_width(%rip), %eax
+    cvtsi2ss %eax, %xmm0
+    movl $GRID_COLS, %ecx
+    cvtsi2ss %ecx, %xmm1
+    divss %xmm1, %xmm0
+    movss %xmm0, tile_width
     
-    .load_tiles_loop_init:
-        movq $0, %r14
+    # calculate tile height
+    movl window_height(%rip), %eax
+    cvtsi2ss %eax, %xmm0
+    movl $GRID_ROWS, %ecx
+    cvtsi2ss %ecx, %xmm1
+    divss %xmm1, %xmm0
+    movss %xmm0, tile_height
+    
+    movq $0, %r14
     load_tiles_loop:
         # load the base tile
         movq tiles_paths(, %r14, 8), %rdi
@@ -402,22 +388,40 @@ game_loop:
         jl load_tiles_loop
 
     # calculate base width
-    movl tile_width(%rip), %eax
-    mull base_w_percentage(%rip)
-
-    movl $0, %edx
-    movl $100, %ecx
-    idivl %ecx
-    movl %eax, base_w(%rip)
+    movss tile_width(%rip), %xmm0
+    movss base_w_percentage(%rip), %xmm1
+    mulss %xmm1, %xmm0
+    movss %xmm0, base_w(%rip)
 
     # calculate base height
-    movl tile_height(%rip), %eax
-    mull base_h_percentage(%rip)
+    movss tile_height(%rip), %xmm0
+    movss base_h_percentage(%rip), %xmm1
+    mulss %xmm1, %xmm0
+    movss %xmm0, base_h(%rip)
 
-    movl $0, %edx
-    movl $100, %ecx
-    divl %ecx
-    movl %eax, base_h(%rip)
+    call init_wave
+
+    # calculate mob height
+    movss tile_height(%rip), %xmm0
+    movl $2, %eax
+    cvtsi2ss %eax, %xmm1
+    divss %xmm1, %xmm0
+    movss %xmm0, mob_h_center(%rip)
+    movss tile_height(%rip), %xmm0
+    movss mob_h_percentage(%rip), %xmm1
+    mulss %xmm1, %xmm0
+    movss %xmm0, mob_h(%rip)
+
+    # calculate mob width
+    movss tile_width(%rip), %xmm0
+    movl $2, %eax
+    cvtsi2ss %eax, %xmm1
+    divss %xmm1, %xmm0
+    movss %xmm0, mob_w_center(%rip)
+    movss tile_width(%rip), %xmm0
+    movss mob_w_percentage(%rip), %xmm1
+    mulss %xmm1, %xmm0
+    movss %xmm0, mob_w(%rip)
 
     .main_loop:
         # process input
@@ -474,6 +478,7 @@ game_loop:
                 jne .reset_place_tower
 
                 movq %r15, %rdi
+                movb -130(%rbp), %sil
                 call render_menu
 
                 cmpq $-1, %rax # if we need to quit the game
@@ -530,22 +535,19 @@ game_loop:
         
         .place_tower:
             # the x value is stored with a 28 byte offset from the SDL_Event address
-            cvttss2si -100(%rbp), %eax
-            # the y value is stored with a 32 byte offset from the SDL_Event address
-            cvttss2si -96(%rbp), %ecx
-            movl tile_width(%rip), %r8d
-            movl $0, %edx
-            idivl %r8d
-            movl %eax, %r9d
+            movss -100(%rbp), %xmm0
+            movss tile_width(%rip), %xmm1
+            divss %xmm1, %xmm0
+            cvttss2si %xmm0, %r9d
             
             cmpl $GRID_COLS, %r9d
             jge .render_frame
 
-            movl tile_height(%rip), %r8d
-            movl %ecx, %eax
-            movl $0, %edx
-            idivl %r8d
-            movl %eax, %ecx
+            # the y value is stored with a 32 byte offset from the SDL_Event address
+            movss -96(%rbp), %xmm0
+            movss tile_height(%rip), %xmm1
+            divss %xmm1, %xmm0
+            cvttss2si %xmm0, %ecx
 
             cmpl $GRID_ROWS, %ecx
             jge .render_frame
@@ -560,24 +562,24 @@ game_loop:
 
             # both the clicked tile and the one above it must be grass
             movslq %eax, %rax
-            leaq MAP_GRID(%rip), %rdi
-            movb (%rdi, %rax, 1), %cl
+            leaq MAP_GRID(%rip), %rdx
+            movb (%rdx, %rax, 1), %cl
 
             cmpb $TILE_GRASS, %cl
             jne .render_frame
 
             subq $GRID_COLS, %rax
-            movb (%rdi, %rax, 1), %cl
+            movb (%rdx, %rax, 1), %cl
 
             cmpb $TILE_GRASS, %cl
             jne .render_frame
 
-            movb $TILE_BLOCKED, (%rdi, %rax, 1)
+            movb $TILE_BLOCKED, (%rdx, %rax, 1)
 
             addq $GRID_COLS, %rax
             movb -129(%rbp), %cl
             addb $2, %cl # adjust from cursor index to tile
-            movb %cl, (%rdi, %rax, 1)
+            movb %cl, (%rdx, %rax, 1)
 
             jmp .reset_place_tower
 
@@ -590,7 +592,9 @@ game_loop:
             jmp .render_frame
         
         .render_frame:
-            movq %r15, %rdi
+            call update_mobs
+            call spawn_mob
+
             call render_scene
             # SDL_RenderPresent(renderer);
             movq game_ren(%rip), %rdi
@@ -621,9 +625,8 @@ game_loop:
 
     .game_loop_end:
         popq %rbx
-        popq %r15
         popq %r14
-        addq $136, %rsp # deallocate stack space
+        addq $144, %rsp # deallocate stack space
         movq $0, %rax # success
         movq %rbp, %rsp
         popq %rbp
