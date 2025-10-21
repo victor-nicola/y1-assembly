@@ -31,6 +31,7 @@ gcc \
     "$SRC_DIR"/src/game_loop.s \
     "$SRC_DIR"/src/menu.s \
     "$SRC_DIR"/src/text_renderer.s \
+    "$SRC_DIR"/src/mob_logic.s \
     -o "$BUILD_DIR/game" \
     -I"$SDL3_INCLUDE" \
     -I"$SDL3TTF_INCLUDE" \
@@ -72,7 +73,40 @@ cd "\$BUILD_DIR"
 EOF
 
 # Make the wrapper executable
-chmod +x "$RUN_SCRIPT"
+chmod u+x "$RUN_SCRIPT"
 
 echo "Build complete: $BUILD_DIR/game"
 echo "To run the game from anywhere, use: $SRC_DIR/run.sh"
+
+# --- New Step: Generate Portable Debug Wrapper ---
+echo "Generating debug.sh wrapper script in project root..."
+# The DEBUG_SCRIPT is placed in the project root (SRC_DIR)
+DEBUG_SCRIPT="$SRC_DIR/debug.sh"
+
+# Use a here-doc to create the wrapper script
+cat <<EOF > "$DEBUG_SCRIPT"
+#!/bin/bash
+# This wrapper changes the directory to 'build' before execution.
+# This ensures the game's internal relative asset path (../assets/...) resolves correctly.
+
+# Get the absolute path of this script's directory (the project root, e.g., /path/to/project/)
+SCRIPT_DIR="\$(dirname "\$(readlink -f "\$0")")"
+
+# Define the absolute path to the build directory
+BUILD_DIR="\$SCRIPT_DIR/build"
+
+# Crucial fix: Change directory to the 'build' folder.
+# When the CWD is 'build', the game's internal path '../assets/' correctly resolves
+# to the project root's 'assets/' folder.
+cd "\$BUILD_DIR"
+
+# Execute the game binary under gdb. Since the CWD is now 'build', the binary is "./game".
+# The "\$@" passes any command-line arguments to the game
+gdb ./game "\$@"
+
+EOF
+
+# Make the wrapper executable
+chmod u+x "$DEBUG_SCRIPT"
+
+echo "To debug the game from anywhere, use: $SRC_DIR/debug.sh"

@@ -30,9 +30,7 @@ render_menu:
     subq $152, %rsp
     # 16 for menu overlay SDL_FRect (-16 to -1)
     # 128 for the SDL_Event union (-144 to -17)
-    # 8 for rdi (-152 to -145)
     pushq %rbx
-    movq %rdi, -152(%rbp)
 
     # calculate button props
     # .button_w
@@ -123,7 +121,6 @@ render_menu:
 
     .menu_loop:
         # draw game scene
-        movq -152(%rbp), %rdi
         call render_scene
 
         # ensure nice opacity blend (for opacity overlay)
