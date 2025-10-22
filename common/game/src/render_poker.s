@@ -13,8 +13,8 @@
 .extern SDL_CreateTextureFromSurface
 .extern SDL_DestroySurface
 .extern SDL_RenderTexture
-.extern SDL_RenderPresent # Added extern for the single present
-.extern SDL_DestroyTexture # Added extern for the return type
+.extern SDL_RenderPresent
+.extern SDL_DestroyTexture
 
 .menu_w: .long 920
 .menu_h: .long 540
@@ -38,21 +38,20 @@ card5: .quad 0
 
 .section .text
 .global render_hand
-.extern render_scene  # Used to draw the background game scene
+.extern render_scene
 .extern draw_text_texture
 
 render_hand:
     pushq %rbp
     movq %rsp, %rbp
-    subq $32, %rsp # Align stack (32 bytes for 2 pushq, 16 for local rect)
+    subq $32, %rsp 
 
     pushq %r12
     pushq %rbx
+    pushq %r9
     
-    movq %rdi, %r12 # R12 holds the pointer to the array of 5 card filename strings
+    movq %rdi, %r12
     
-    # --- Calculate Positions (Logic looks correct for positioning) ---
-    # Centering the Menu
     movl window_width(%rip), %eax
     subl .menu_w(%rip), %eax
     shrl $1, %eax
@@ -63,107 +62,81 @@ render_hand:
     shrl $1, %eax
     movl %eax, .menu_y(%rip)
 
-    # Calculate X positions
+    leaq .cards_x(%rip), %r8
+
     movl .menu_x(%rip), %eax
     addl .menu_x_padding(%rip), %eax
-    movl %eax, .cards_x(%rip) # Card 1
+    movl %eax, (%r8)
 
-    movq .cards_x(%rip), %r8
+    movq $1, %rcx
+.calculate_x_loop:
+    cmpq $5, %rcx
+    je .x_calc_done
 
-    movq $0, %rcx
-
-    movl (%r8,%rcx,4), %eax # Use Card 1 X as base
-    incq %rcx
+    movl -4(%r8,%rcx,4), %eax
     addl .card_w(%rip), %eax
     addl .card_padding(%rip), %eax
-    movl %eax, (%r8,%rcx,4) # Card 2 
-    
-    movl (%r8,%rcx,4), %eax 
+    movl %eax, (%r8,%rcx,4)
+
     incq %rcx
-    addl .card_w(%rip), %eax
-    addl .card_padding(%rip), %eax
-    movl %eax, (%r8,%rcx,4) # Card 3
+    jmp .calculate_x_loop
+.x_calc_done:
 
-    movl (%r8,%rcx,4), %eax 
-    incq %rcx
-    addl .card_w(%rip), %eax
-    addl .card_padding(%rip), %eax
-    movl %eax, (%r8,%rcx,4) # Card 4
-
-    movl (%r8,%rcx,4), %eax 
-    incq %rcx
-    addl .card_w(%rip), %eax
-    addl .card_padding(%rip), %eax
-    movl %eax, (%r8,%rcx,4) # Card 5
-
-    movl %r8d, .cards_x(%rip)
-
-    # Calculate Y position
     movl .menu_y(%rip), %eax
-    addl $100, %eax # Adding a vertical offset 
+    addl $300, %eax 
     movl %eax, .card_y(%rip)
     
-    # --- Load Textures (Loops through 5 times, fixed to use R12 for string base) ---
-    movq $0, %rcx # Loop index
+    leaq card1(%rip), %r9
+    movq $0, %rbx
 .load_card_loop:
-    cmpq $5, %rcx
+    cmpq $5, %rbx
     je .start_drawing
 
-    # Load BMP (SDL_LoadBMP(filename_ptr))
     movq %r12, %rdi
-    movq %rcx, %rdx
-    imulq $8, %rdx
-    addq %rdx, %rdi # rdi = r12 + rcx * 8 (Address of the string)
+    movq %rbx, %rdx
+    imulq $32, %rdx
+    addq %rdx, %rdi
     call SDL_LoadBMP
-    movq %rax, %rbx # save surface
+    movq %rax, -24(%rbp) 
 
-    # Create Texture (SDL_CreateTextureFromSurface(renderer, surface))
     movq game_ren(%rip), %rdi
-    movq %rbx, %rsi
+    movq -24(%rbp), %rsi
     call SDL_CreateTextureFromSurface
     
-    # Store texture pointer in static variable
-    movq %rax, (%r8, %rcx, 8) # Store at card1 + rcx * 8 (i.e., card1, card2, ...)
-    movq %r8, card1(%rip)
+    movq %rax, (%r9, %rbx, 8) 
     
-    # Destroy Surface (SDL_DestroySurface(surface))
-    movq %rbx, %rdi
+    movq -24(%rbp), %rdi
     call SDL_DestroySurface
     
-    incq %rcx
+    incq %rbx
     jmp .load_card_loop
 
 .start_drawing:
-    # 1. Draw game scene 
     call render_scene 
 
-    # 2. Draw cards (Draws all 5)
-    movq $0, %rcx # Loop index
+    movq $0, %rcx
 .draw_card_loop:
     cmpq $5, %rcx
     je .present_and_return
 
-    # Load correct X position
-    movq .cards_x(%rip), %r8
+    leaq .cards_x(%rip), %r8
     movl (%r8, %rcx, 4), %eax
     cvtsi2ss %eax, %xmm0
-    movss %xmm0, -16(%rbp) # x
+    movss %xmm0, -16(%rbp)
     
-    # Load Y, W, H (Y is static, W/H are static)
     movl .card_y(%rip), %eax
     cvtsi2ss %eax, %xmm0
-    movss %xmm0, -12(%rbp) # y
+    movss %xmm0, -12(%rbp)
     movl .card_w(%rip), %eax
     cvtsi2ss %eax, %xmm0
-    movss %xmm0, -8(%rbp) # w
+    movss %xmm0, -8(%rbp)
     movl .card_h(%rip), %eax
     cvtsi2ss %eax, %xmm0
-    movss %xmm0, -4(%rbp) # h
+    movss %xmm0, -4(%rbp)
 
-    # Draw the texture (SDL_RenderTexture(renderer, texture, NULL, &dstrect))
     movq game_ren(%rip), %rdi
-    movq card1(%rip), %r8
-    movq (%r8, %rcx, 8), %rsi # Load texture pointer from card1 + rcx*8
+    leaq card1(%rip), %r9
+    movq (%r9, %rcx, 8), %rsi
     movq $0, %rdx
     leaq -16(%rbp), %rcx
     call SDL_RenderTexture 
@@ -172,14 +145,16 @@ render_hand:
     jmp .draw_card_loop
 
 .present_and_return:
-    call SDL_RenderPresent # Update the screen
+    call SDL_RenderPresent
 
-    leaq card1(%rip), %rax # Return the base address of the 5 card texture pointers (card1-card5)
+    leaq card1(%rip), %rax
     
+    popq %r9
     popq %rbx
     popq %r12
     
-    addq $32, %rsp 
+    addq $32, %rsp
     movq %rbp, %rsp
     popq %rbp
     ret
+    

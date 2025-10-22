@@ -87,20 +87,20 @@ render_upgrade_menu:
     addl .menu_w(%rip), %eax
     subl .close_button_w(%rip), %eax
     subl .menu_xpadding(%rip), %eax
-    subl $50, %eax
+    subl $64, %eax
     movl %eax, .close_button_x(%rip)
 
     movl .menu_y(%rip), %eax
-    # addl .menu_ypadding(%rip), %eax
     movl %eax, .close_button_y(%rip)
 
     movl .menu_x(%rip), %eax
-    addl .menu_w(%rip), %eax
-    subl .upgrade_button_w(%rip), %eax
+    # addl .menu_w(%rip), %eax
+    addl .upgrade_button_w(%rip), %eax
+    addl $70, %eax
     movl %eax, .upgrade_button_x(%rip)
 
     movl .menu_y(%rip), %eax
-    subl .menu_ypadding(%rip), %eax
+    addl .menu_ypadding(%rip), %eax
     movl %eax, .upgrade_button_y(%rip)
 
     leaq close_button_path(%rip), %rdi
@@ -225,8 +225,11 @@ render_upgrade_menu:
     cmpb $1, -120(%rbp)
     jne .show_menu
 
-    movl -116(%rbp), %eax
-    movl -112(%rbp), %ecx
+    movss -116(%rbp), %xmm0
+    cvttss2si %xmm0, %eax
+
+    movss -112(%rbp), %xmm0
+    cvttss2si %xmm0, %ecx
 
     movl .close_button_x(%rip), %r8d
     addl .close_button_w(%rip), %r8d
