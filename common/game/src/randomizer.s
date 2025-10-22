@@ -204,6 +204,7 @@ check_flush:
     flush_finish:
         ret
 
+.global get_poker_hand
 
 get_poker_hand:
     pushq %rbp

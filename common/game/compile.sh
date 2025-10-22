@@ -31,7 +31,9 @@ gcc \
     "$SRC_DIR"/src/game_loop.s \
     "$SRC_DIR"/src/menu.s \
     "$SRC_DIR"/src/text_renderer.s \
-    "$SRC_DIR"/src/mob_logic.s \
+    "$SRC_DIR"/src/upgrade_menu.s \
+    "$SRC_DIR"/src/randomizer.s \
+    "$SRC_DIR"/src/render_poker.s \
     -o "$BUILD_DIR/game" \
     -I"$SDL3_INCLUDE" \
     -I"$SDL3TTF_INCLUDE" \

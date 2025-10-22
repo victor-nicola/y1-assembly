@@ -36,6 +36,8 @@ MAP_GRID:
 tower_x: .space MAX_TOWERS
 tower_y: .space MAX_TOWERS
 towers_index: .byte 0
+tower_upgrade_level: .byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+
 
 tiles: .quad 0
        .quad 0
@@ -91,6 +93,8 @@ coins_y: .float 0
 .global tower_x
 .global tower_y
 .global towers_index
+.global tower_upgrade_level
+.include "src/upgrade_menu.s"
 
 render_scene:
     pushq %rbp
@@ -479,6 +483,80 @@ game_loop:
         # the button value is stored with a 24 byte offset from the SDL_Event address
         cmpb $1, -104(%rbp) # if the left mouse button was pressed
         jne .render_frame
+
+        # 1. Calculate Grid X (R8D = Grid_X)
+        movl window_width(%rip), %edx # Load window width
+        movl $GRID_COLS, %r9d         # Divisor (16)
+        movl %eax, %r10d              # Save mouse X in R10D
+        movl $0, %eax                 # Clear EAX for division setup
+        idivl %r9d                    # EAX = window_width / GRID_COLS (Tile Width)
+        movl %r10d, %eax              # Restore mouse X to EAX
+        movl $0, %edx                 # Clear EDX for division setup
+        idivl %eax                    # EAX = mouse_x / Tile_Width (Grid_X)
+        movl %eax, %r8d               # R8D = Grid_X
+
+        # 2. Calculate Grid Y (R9D = Grid_Y)
+        movl window_height(%rip), %edx # Load window height
+        movl $GRID_ROWS, %r10d         # Divisor (9)
+        movl %eax, %r11d               # Save mouse Y in R11D
+        movl $0, %eax                  # Clear EAX for division setup
+        idivl %r10d                    # EAX = window_height / GRID_ROWS (Tile Height)
+        movl %r11d, %eax               # Restore mouse Y to EAX
+        movl $0, %edx                  # Clear EDX for division setup
+        idivl %eax                     # EAX = mouse_y / Tile_Height (Grid_Y)
+        movl %eax, %r9d                # R9D = Grid_Y
+
+        # 3. Loop through all placed towers
+        movzbl towers_index(%rip), %r10d # R10D = total number of towers
+        movq $0, %r11                    # R11 = tower loop index (i)
+
+        .tower_click_loop:
+            cmpq %r10, %r11
+            jge .check_placement_mode        # Done looping, no tower clicked
+
+            movzbl tower_x(, %r11, 1), %eax  # Load tower_x[i]
+            cmpl %r8d, %eax                  # Compare tower_x[i] with Grid_X
+            jne .next_tower                  # Not X match, check next tower
+
+            movzbl tower_y(, %r11, 1), %eax  # Load tower_y[i]
+            cmpl %r9d, %eax                  # Compare tower_y[i] with Grid_Y
+            jne .next_tower                  # Not Y match, check next tower
+
+            # --- TOWER FOUND AND CLICKED ---
+            jmp .call_upgrade_menu
+
+        .next_tower:
+            incq %r11                        # Next tower index (i++)
+            jmp .tower_click_loop
+
+        .call_upgrade_menu:
+            # Get current upgrade level (R11 holds the tower index)
+            movzbl tower_upgrade_level(, %r11, 1), %eax
+            movq %rax, %rdi                  # Arg 1 (RDI) = current level
+
+            # Call the menu
+            call render_upgrade_menu         # Returns poker hand level in RAX
+
+            # See if hand is better than a high card
+            cmpq $0, %rax
+            je dont_increase_tower_level
+            cmpq $9, %rax
+            jg add_money
+            incb tower_upgrade_level(, %r11, 1) # Store new level back into the array
+
+            movzbq tower_upgrade_level(, %r11, 1), %rdi
+            jmp .render_frame
+
+            add_money:
+                # move rax into money variable, this happens when the tower 
+                # is at level 3 already and you try to upgrade it, you get 
+                # some money back based on the hand u get
+
+            dont_increase_tower_level:
+
+            jmp .render_frame                # Skip tower placement logic, continue game loop
+
+        .check_placement_mode:
 
         cmpb $-1, -129(%rbp)
         je .render_frame

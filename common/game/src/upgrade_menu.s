@@ -13,7 +13,7 @@
 .extern SDL_Delay
 .extern get_poker_hand
 
-.extern .card1_x
+.extern .cards_x
 .extern .card_y
 .extern .card_w
 .extern .card_h
@@ -60,6 +60,8 @@ poker_hand_score: .long 0     # The score (0-9)
 .extern SDL_LoadBMP
 .extern SDL_CreateTextureFromSurface
 .extern SDL_DestroySurface
+
+.extern get_poker_hand
 
 render_upgrade_menu:
     pushq %rbp
@@ -292,7 +294,8 @@ render_upgrade_menu:
     cmpq $5, %r12
     je .present_poker_and_delay
 
-    movl .card1_x(%rip, %r12, 4), %eax
+    leaq .cards_x(%rip), %r8
+    movl (%r8,%r12,4), %eax
     cvtsi2ss %eax, %xmm0
     movss %xmm0, -16(%rbp)
     
@@ -356,6 +359,7 @@ render_upgrade_menu:
 # ----------------------------------------------------
 .process_poker_result:
 
+
     movl $0, poker_state(%rip) 
     jmp .menu_loop
 
@@ -373,7 +377,16 @@ render_upgrade_menu:
     movq upgrade_menu_texture(%rip), %rdi
     call SDL_DestroyTexture 
 
-    movq .poker_hand_score, %rax
+    cmpq $3 , -152(%rbp) 
+    movl poker_hand_score, %eax
+    je give_money
+    jmp dont_give_money
+
+    give_money:
+        movq $10, %rbx
+        mulq %rbx
+
+    dont_give_money:
 
     popq %r12
     popq %rbx

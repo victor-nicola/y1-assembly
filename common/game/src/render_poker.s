@@ -1,5 +1,10 @@
 .section .note.GNU-stack,"",@progbits
 
+.global .cards_x
+.global .card_y
+.global .card_w
+.global .card_h
+
 .section .data
 .extern window_width
 .extern window_height
@@ -11,22 +16,19 @@
 .extern SDL_RenderPresent # Added extern for the single present
 .extern SDL_DestroyTexture # Added extern for the return type
 
-.menu_w: long 920
-.menu_h: long 540
-.menu_x: long 0
-.menu_y: long 0
+.menu_w: .long 920
+.menu_h: .long 540
+.menu_x: .long 0
+.menu_y: .long 0
 
 .card_padding: .long 10
 .menu_x_padding: .long 240
 
-.card_w: long 88
-.card_h: long 124
-.card1_x: long 0
-.card2_x: long 0
-.card3_x: long 0
-.card4_x: long 0
-.card5_x: long 0
-.card_y: long 0
+
+.card_w: .long 88
+.card_h: .long 124
+.cards_x: .long 0,0,0,0,0
+.card_y: .long 0
 
 card1: .quad 0
 card2: .quad 0
@@ -64,27 +66,31 @@ render_hand:
     # Calculate X positions
     movl .menu_x(%rip), %eax
     addl .menu_x_padding(%rip), %eax
-    movl %eax, .card1_x(%rip) # Card 1
+    movl %eax, .cards_x(%rip) # Card 1
 
-    movl .card1_x(%rip), %eax # Use Card 1 X as base
+    movq .cards_x(%rip), %r8
+
+    movl (%r8,0,4), %eax # Use Card 1 X as base
     addl .card_w(%rip), %eax
     addl .card_padding(%rip), %eax
-    movl %eax, .card2_x(%rip) # Card 2 
+    movl %eax, (%r8,1,4) # Card 2 
     
-    movl .card2_x(%rip), %eax 
+    movl (%r8,1,4), %eax 
     addl .card_w(%rip), %eax
     addl .card_padding(%rip), %eax
-    movl %eax, .card3_x(%rip) # Card 3
+    movl %eax, (%r8,2,4) # Card 3
 
-    movl .card3_x(%rip), %eax 
+    movl (%r8,2,4), %eax 
     addl .card_w(%rip), %eax
     addl .card_padding(%rip), %eax
-    movl %eax, .card4_x(%rip) # Card 4
+    movl %eax, (%r8,3,4) # Card 4
 
-    movl .card4_x(%rip), %eax 
+    movl (%r8,3,4), %eax 
     addl .card_w(%rip), %eax
     addl .card_padding(%rip), %eax
-    movl %eax, .card5_x(%rip) # Card 5
+    movl %eax, (%r8,4,4) # Card 5
+
+    movl %r8d, .cards_x(%rip)
 
     # Calculate Y position
     movl .menu_y(%rip), %eax
@@ -111,7 +117,8 @@ render_hand:
     call SDL_CreateTextureFromSurface
     
     # Store texture pointer in static variable
-    movq %rax, card1(%rip, %rcx, 8) # Store at card1 + rcx * 8 (i.e., card1, card2, ...)
+    movq %rax, (%r8, %rcx, 8) # Store at card1 + rcx * 8 (i.e., card1, card2, ...)
+    movq %r8, card1(%rip)
     
     # Destroy Surface (SDL_DestroySurface(surface))
     movq %rbx, %rdi
@@ -131,7 +138,8 @@ render_hand:
     je .present_and_return
 
     # Load correct X position
-    movl .card1_x(%rip, %rcx, 4), %eax
+    movq .cards_x(%rip), %r8
+    movl (%r8, %rcx, 4), %eax
     cvtsi2ss %eax, %xmm0
     movss %xmm0, -16(%rbp) # x
     
@@ -148,7 +156,8 @@ render_hand:
 
     # Draw the texture (SDL_RenderTexture(renderer, texture, NULL, &dstrect))
     movq game_ren(%rip), %rdi
-    movq card1(%rip, %rcx, 8), %rsi # Load texture pointer from card1 + rcx*8
+    movq card1(%rip), %r8
+    movq (%r8, %rcx, 8), %rsi # Load texture pointer from card1 + rcx*8
     movq $0, %rdx
     leaq -16(%rbp), %rcx
     call SDL_RenderTexture 
