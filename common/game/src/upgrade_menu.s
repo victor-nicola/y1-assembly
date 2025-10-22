@@ -87,6 +87,7 @@ render_upgrade_menu:
     addl .menu_w(%rip), %eax
     subl .close_button_w(%rip), %eax
     subl .menu_xpadding(%rip), %eax
+    subl $50, %eax
     movl %eax, .close_button_x(%rip)
 
     movl .menu_y(%rip), %eax
