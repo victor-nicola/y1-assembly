@@ -10,7 +10,8 @@ ttf_create_text_engine: .asciz "TTF_CreateRendererTextEngine Error: %s\n"
 ttf_create_text: .asciz "TTF_CreateText Error: %s\n"
 window_title: .asciz "Assembly Game!"
 font_path: .asciz "../assets/fonts/PixelatedEleganceRegular-ovyAA.ttf"
-font_size: .long 20
+font_size_percentage: .float 0.02
+font_size: .float 20
 grass_tile_path: .asciz "../assets/map-tiles/grass.bmp"
 path_tile_path: .asciz "../assets/map-tiles/path.bmp"
 base_tile_path: .asciz "../assets/towers/eemcs.bmp"
@@ -135,7 +136,7 @@ create_renderer:
 
     # check for error (NULL is error)
     cmpq $0, %rax
-    jne init_ttf # if success, jump to TTF init
+    jne get_window_size # if success, jump to get window size
 
     # SDL_DestroyWindow(win);
     movq game_win(%rip), %rdi
@@ -149,6 +150,46 @@ create_renderer:
     
     call SDL_Quit
     
+    # return 1 on error
+    movl $1, %eax
+    jmp cleanup_exit
+
+get_window_size:
+    .wait_for_resize:
+        leaq -128(%rbp), %rdi # place to put the SDL_Event
+        call SDL_PollEvent
+        cmpl $0, %eax # check if SDL_PollEvent returned 0 (no event)
+        je .wait_for_resize # if no event loop again
+
+        # check if the event type is SDL_EVENT_WINDOW_RESIZED
+        cmpl $0x206, -128(%rbp)
+        jne .wait_for_resize
+
+    movq game_win(%rip), %rdi # window
+    leaq window_width(%rip), %rsi
+    leaq window_height(%rip), %rdx
+    call SDL_GetWindowSizeInPixels
+
+    # calculate font size based on window width
+    movl window_width(%rip), %eax
+    cvtsi2ssl %eax, %xmm0
+    movss font_size_percentage(%rip), %xmm1
+    mulss %xmm1, %xmm0
+    movss %xmm0, font_size(%rip)
+
+    cmp $0, %rax
+    jne init_ttf # if success, jump to TTF init
+
+    # SDL_DestroyRenderer(ren);
+    movq game_ren(%rip), %rdi
+    call SDL_DestroyRenderer
+
+    # SDL_DestroyWindow(win);
+    movq game_win(%rip), %rdi
+    call SDL_DestroyWindow
+
+    call SDL_Quit
+
     # return 1 on error
     movl $1, %eax
     jmp cleanup_exit
@@ -209,9 +250,7 @@ make_text_engine:
 
 load_font:
     leaq font_path(%rip), %rdi
-    movl font_size(%rip), %eax
-    # convert integer to float
-    cvtsi2ss %eax, %xmm0
+    movss font_size(%rip), %xmm0
     call TTF_OpenFont
     movq %rax, game_font(%rip)
 
@@ -245,13 +284,13 @@ load_font:
 make_text:
     movq -136(%rbp), %rdi
     movq game_font(%rip), %rsi
-    movq starter_string(%rip), %rdx
+    leaq starter_string(%rip), %rdx
     movq $0, %rcx
     call TTF_CreateText
     movq %rax, game_text(%rip)
 
     cmpl $0, %eax
-    jne call_game_loop_wait
+    jne call_game_loop
 
     call SDL_GetError
     movq %rax, %rsi
@@ -276,22 +315,7 @@ make_text:
     movq $1, %rax
     jmp cleanup_exit
 
-call_game_loop_wait:
-    .wait_for_resize:
-        leaq -128(%rbp), %rdi # place to put the SDL_Event
-        call SDL_PollEvent
-        cmpl $0, %eax # check if SDL_PollEvent returned 0 (no event)
-        je .wait_for_resize # if no event loop again
-
-        # check if the event type is SDL_EVENT_WINDOW_RESIZED
-        cmpl $0x206, -128(%rbp)
-        jne .wait_for_resize
-
-    movq game_win(%rip), %rdi # window
-    leaq window_width(%rip), %rsi
-    leaq window_height(%rip), %rdx
-    call SDL_GetWindowSizeInPixels
-
+call_game_loop:
     call game_loop
 
 cleanup:
