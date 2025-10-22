@@ -36,7 +36,7 @@ MAP_GRID:
 tower_x: .space MAX_TOWERS
 tower_y: .space MAX_TOWERS
 towers_index: .byte 0
-tower_upgrade_level: .byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+tower_upgrade_level: .byte 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
 
 
 tiles: .quad 0
@@ -510,26 +510,18 @@ game_loop:
         jne .render_frame
 
         # 1. Calculate Grid X (R8D = Grid_X)
-        movl window_width(%rip), %edx # Load window width
-        movl $GRID_COLS, %r9d         # Divisor (16)
-        movl %eax, %r10d              # Save mouse X in R10D
-        movl $0, %eax                 # Clear EAX for division setup
-        idivl %r9d                    # EAX = window_width / GRID_COLS (Tile Width)
-        movl %r10d, %eax              # Restore mouse X to EAX
-        movl $0, %edx                 # Clear EDX for division setup
-        idivl %eax                    # EAX = mouse_x / Tile_Width (Grid_X)
-        movl %eax, %r8d               # R8D = Grid_X
+        
+        movss -100(%rbp), %xmm0
+        movss tile_width(%rip), %xmm1
+        divss %xmm1, %xmm0
+        cvttss2si %xmm0, %r8d
 
         # 2. Calculate Grid Y (R9D = Grid_Y)
-        movl window_height(%rip), %edx # Load window height
-        movl $GRID_ROWS, %r10d         # Divisor (9)
-        movl %eax, %r11d               # Save mouse Y in R11D
-        movl $0, %eax                  # Clear EAX for division setup
-        idivl %r10d                    # EAX = window_height / GRID_ROWS (Tile Height)
-        movl %r11d, %eax               # Restore mouse Y to EAX
-        movl $0, %edx                  # Clear EDX for division setup
-        idivl %eax                     # EAX = mouse_y / Tile_Height (Grid_Y)
-        movl %eax, %r9d                # R9D = Grid_Y
+        movss -96(%rbp), %xmm0
+        movss tile_height(%rip), %xmm1
+        divss %xmm1, %xmm0
+        cvttss2si %xmm0, %ecx
+        movl %ecx, %r9d
 
         # 3. Loop through all placed towers
         movzbl towers_index(%rip), %r10d # R10D = total number of towers

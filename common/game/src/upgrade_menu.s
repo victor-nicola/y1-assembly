@@ -18,11 +18,11 @@
 .extern .card_w
 .extern .card_h
 
-close_button_path: .asciz "../upgrade-menu-buttons/close_icon.bmp"
-upgrade_button_path: .asciz "../upgrade-menu-buttons/upgrade-button.bmp"
-upgrade1_path:     .asciz "../upgrade-menu-buttons/upgrade1.bmp" 
-upgrade2_path:     .asciz "../upgrade-menu-buttons/upgrade2.bmp" 
-upgrade3_path:     .asciz "../upgrade-menu-buttons/upgrade3.bmp" 
+close_button_path: .asciz "../assets/upgrade-menu-buttons/close_icon.bmp"
+upgrade_button_path: .asciz "../assets/upgrade-menu-buttons/upgrade-button.bmp"
+upgrade1_path:     .asciz "../assets/upgrade-menu-buttons/upgrade1.bmp" 
+upgrade2_path:     .asciz "../assets/upgrade-menu-buttons/upgrade2.bmp" 
+upgrade3_path:     .asciz "../assets/upgrade-menu-buttons/upgrade3.bmp" 
 
 ## Panel and Button properties
 .menu_w: .long 960
@@ -66,7 +66,7 @@ poker_hand_score: .long 0     # The score (0-9)
 render_upgrade_menu:
     pushq %rbp
     movq %rsp, %rbp
-    subq $152, %rsp
+    subq $160, %rsp
     pushq %rbx
     pushq %r12
     movq %rdi, -152(%rbp)
@@ -84,12 +84,13 @@ render_upgrade_menu:
 
     movl .menu_x(%rip), %eax
     addl .menu_w(%rip), %eax
+    addl .menu_w(%rip), %eax
     subl .close_button_w(%rip), %eax
     subl .menu_xpadding(%rip), %eax
     movl %eax, .close_button_x(%rip)
 
     movl .menu_y(%rip), %eax
-    addl .menu_ypadding(%rip), %eax
+    # addl .menu_ypadding(%rip), %eax
     movl %eax, .close_button_y(%rip)
 
     movl .menu_x(%rip), %eax
@@ -390,6 +391,6 @@ render_upgrade_menu:
 
     popq %r12
     popq %rbx
-    addq $152, %rsp
+    addq $160, %rsp
     popq %rbp
     ret
