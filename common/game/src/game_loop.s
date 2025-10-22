@@ -10,6 +10,7 @@
 .equ TILE_STEFAN, 5
 .equ TILE_BASE, 6
 .equ TILE_BLOCKED, 7
+.equ TILE_BLOCKED_ARASH, 8
 .equ TILE_RIGHT, 11
 .equ TILE_LEFT, 12
 .equ TILE_STOP, 13
@@ -30,6 +31,11 @@ MAP_GRID:
 
 .equ TOWER_Y_CENTER_BMP, 32
 .equ TOWER_X_CENTER_BMP, 16
+.equ MAX_TOWERS, 50
+
+tower_x: .space MAX_TOWERS
+tower_y: .space MAX_TOWERS
+towers_index: .byte 0
 
 tiles: .quad 0
        .quad 0
@@ -60,6 +66,12 @@ mob_w_center: .float 0
 mob_h_percentage: .float 0.75
 mob_w_percentage: .float 0.75
 
+coins: .long 0
+coins_text_format: .asciz "Coins: %d"
+coins_text: .space 16
+coins_x: .float 0
+coins_y: .float 0
+
 .section .text
 .global game_loop
 .global render_scene
@@ -76,6 +88,9 @@ mob_w_percentage: .float 0.75
 .global TILE_LEFT
 .global TILE_RIGHT
 .global TILE_DOWN
+.global tower_x
+.global tower_y
+.global towers_index
 
 render_scene:
     pushq %rbp
@@ -129,6 +144,9 @@ render_scene:
             cmpb $TILE_BASE, %al
             je draw_base
 
+            cmpb $TILE_ARASH, %al
+            je draw_arash
+
             cmpb $TILE_OTTO, %al
             jl continue_testing
 
@@ -138,6 +156,9 @@ render_scene:
             continue_testing:
                 cmpb $TILE_BLOCKED, %al
                 je draw_grass
+
+                cmpb $TILE_BLOCKED_ARASH, %al
+                je draw_path
 
                 cmpb $TILE_LEFT, %al
                 je draw_path
@@ -161,10 +182,17 @@ render_scene:
             draw_grass:
                 movq tiles + (8 * TILE_GRASS)(%rip), %rsi
                 jmp render_texture
-
+            
+            draw_arash:
+                movq tiles + (8 * TILE_DOWN)(%rip), %rsi
+                jmp render_tower
+            
             draw_tower:
-                movq game_ren(%rip), %rdi
                 movq tiles + (8 * TILE_GRASS)(%rip), %rsi
+                jmp render_tower
+            
+            render_tower:
+                movq game_ren(%rip), %rdi
                 movq $0, %rdx # we want all of the tile to be rendered
                 leaq -16(%rbp), %rcx # where we want to render it
                 call SDL_RenderTexture
@@ -184,7 +212,7 @@ render_scene:
                 movzbq -38(%rbp), %rax
                 movq tiles(, %rax, 8), %rsi
                 jmp render_texture
-
+            
             draw_base:
                 # save base position
                 movss -16(%rbp), %xmm0
@@ -312,6 +340,12 @@ render_scene:
             decl %r12d
             cmpl $0, %r12d
             jge .render_mobs
+
+    leaq coins_text(%rip), %rdi
+    leaq coins_text_format(%rip), %rsi
+    movl coins, %edx
+    xorl %eax, %eax
+    call sprintf
 
     addq $48, %rsp
     
@@ -548,6 +582,7 @@ game_loop:
             movss tile_height(%rip), %xmm1
             divss %xmm1, %xmm0
             cvttss2si %xmm0, %ecx
+            movl %ecx, %r10d
 
             cmpl $GRID_ROWS, %ecx
             jge .render_frame
@@ -557,8 +592,14 @@ game_loop:
 
             movl %ecx, %eax
             movl $GRID_COLS, %r8d
-            imull %r8d, %eax            
+            imull %r8d, %eax
             addl %r9d, %eax
+
+            movb -129(%rbp), %cl
+            addb $2, %cl # adjust from cursor index to tile
+
+            cmpb $TILE_ARASH, %cl
+            je .process_arash
 
             # both the clicked tile and the one above it must be grass
             movslq %eax, %rax
@@ -580,8 +621,68 @@ game_loop:
             movb -129(%rbp), %cl
             addb $2, %cl # adjust from cursor index to tile
             movb %cl, (%rdx, %rax, 1)
-
+            
+            movzbq towers_index(%rip), %rax
+            movb %r9b, tower_x(, %rax, 1)
+            movb %r10b, tower_y(, %rax, 1)
+            incb towers_index(%rip)
+            
             jmp .reset_place_tower
+
+            .process_arash:
+                # clicked tile must be path
+                movslq %eax, %rax
+                leaq MAP_GRID(%rip), %rdx
+                movb (%rdx, %rax, 1), %cl
+
+                cmpb $TILE_DOWN, %cl
+                je .good_arash_click
+                
+                cmpb $TILE_LEFT, %cl
+                je .good_arash_click
+
+                cmpb $TILE_RIGHT, %cl
+                je .good_arash_click
+
+                cmpb $TILE_STOP, %cl
+                je .good_arash_click
+
+                jmp .render_frame
+
+                .good_arash_click:
+                    subq $GRID_COLS, %rax
+                    movb (%rdx, %rax, 1), %cl
+                    cmpb $TILE_GRASS, %cl
+                    je .grass_head
+
+                    cmpb $TILE_DOWN, %cl
+                    je .path_head
+                    
+                    cmpb $TILE_LEFT, %cl
+                    je .path_head
+
+                    cmpb $TILE_RIGHT, %cl
+                    je .path_head
+
+                    jmp .render_frame
+
+                    .path_head:
+                        movb $TILE_BLOCKED_ARASH, (%rdx, %rax, 1)
+                        jmp .after_grass_head
+
+                    .grass_head:
+                        movb $TILE_BLOCKED, (%rdx, %rax, 1)
+                    
+                    .after_grass_head:
+                        addq $GRID_COLS, %rax
+
+                        movb $TILE_ARASH, (%rdx, %rax, 1)
+                        
+                        movzbq towers_index(%rip), %rax
+                        movb %r9b, tower_x(, %rax, 1)
+                        movb %r10b, tower_y(, %rax, 1)
+                        incb towers_index(%rip)
+                        jmp .reset_place_tower
 
         .reset_place_tower:
             call SDL_GetDefaultCursor
