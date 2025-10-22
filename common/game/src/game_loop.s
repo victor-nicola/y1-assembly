@@ -351,6 +351,27 @@ render_scene:
     xorl %eax, %eax
     call sprintf
 
+    # render coins text
+    leaq coins_text(%rip), %rdi
+
+    movss tile_height(%rip), %xmm0
+    movl $2, %eax
+    cvtsi2ss %eax, %xmm1
+    divss %xmm1, %xmm0
+    movss %xmm0, coins_y(%rip)
+    
+    movss tile_width(%rip), %xmm0
+    movl $12, %eax
+    cvtsi2ss %eax, %xmm1
+    mulss %xmm1, %xmm0
+    movl $2, %eax
+    cvtsi2ss %eax, %xmm1
+    movss tile_width(%rip), %xmm2
+    divss %xmm1, %xmm2
+    addss %xmm2, %xmm0
+    movss %xmm0, coins_x(%rip)
+    call draw_text
+
     addq $48, %rsp
     
     # restore callee-saved registries

@@ -354,7 +354,7 @@ check_straights_and_flushes:
     movl straight(%rip), %ecx
     cmpl $1, %ecx
     je hand_is_straight
-    jmp end_getpokerhand
+    jmp end_getpoker_hand
 
 hand_is_flush_or_better:
     movl straight(%rip), %ecx
@@ -366,29 +366,29 @@ hand_is_flush_or_better:
     je hand_is_royalflush
     
     movl $8, %eax
-    jmp end_getpokerhand
+    jmp end_getpoker_hand
 
 hand_is_pair:
     movl $1, %eax
-    jmp end_getpokerhand
+    jmp end_getpoker_hand
 hand_is_2pair:
     movl $2, %eax
-    jmp end_getpokerhand
+    jmp end_getpoker_hand
 hand_is_threeofakind:
     movl $3, %eax
-    jmp end_getpokerhand
+    jmp end_getpoker_hand
 hand_is_straight:
     movl $4, %eax
-    jmp end_getpokerhand
+    jmp end_getpoker_hand
 hand_is_flush:
     movl $5, %eax
-    jmp end_getpokerhand
+    jmp end_getpoker_hand
 hand_is_fullhouse:
     movl $6, %eax
-    jmp end_getpokerhand
+    jmp end_getpoker_hand
 hand_is_fourofakind:
     movl $7, %eax
-    jmp end_getpokerhand
+    jmp end_getpoker_hand
 hand_is_royalflush:
     movl $9, %eax
 
