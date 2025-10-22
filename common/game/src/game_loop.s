@@ -68,6 +68,8 @@ mob_w_center: .float 0
 mob_h_percentage: .float 0.75
 mob_w_percentage: .float 0.75
 
+in_wave: .byte 0
+
 coins: .long 10
 coins_text_format: .asciz "Coins: %d"
 coins_text: .space 16
@@ -462,8 +464,6 @@ game_loop:
     mulss %xmm1, %xmm0
     movss %xmm0, base_h(%rip)
 
-    call init_wave
-
     # calculate mob height
     movss tile_height(%rip), %xmm0
     movl $2, %eax
@@ -584,6 +584,9 @@ game_loop:
             # the key value is stored with a 28 byte offset from the SDL_Event address
             movl -100(%rbp), %eax # get key code
 
+            cmpb $1, in_wave(%rip)
+            je .test_in_wave
+
             cmpb $-1, -129(%rbp) # if already holding a tower block tower changing (remove if all towers cost the same)
             jne .test_reset_place_tower
 
@@ -598,6 +601,9 @@ game_loop:
 
             cmpl $0x00000073, %eax # if s key was pressed
             je .place_stefan_init
+
+            cmpl $0x00000020, %eax # if space key was pressed
+            je .start_wave
 
             .test_reset_place_tower:
                 cmpl $0x0000001b, %eax # if esc key was pressed
@@ -614,6 +620,22 @@ game_loop:
                 je .game_loop_cleanup
 
                 jmp .render_frame
+
+            .start_wave:
+                movb $1, in_wave(%rip)
+                call init_wave
+                jmp .render_frame
+
+            .test_in_wave:
+                cmpb $-1, -129(%rbp)
+                jne .render_frame
+
+                movq %r15, %rdi
+                movb -130(%rbp), %sil
+                call render_menu
+
+                cmpq $-1, %rax # if we need to quit the game
+                je .game_loop_cleanup
 
         .place_otto_init:
             movq $TILE_OTTO, %rax
@@ -788,14 +810,18 @@ game_loop:
             jmp .render_frame
         
         .render_frame:
+            cmpb $1, in_wave(%rip)
+            jne .skip_wave_update
+            
             call update_mobs
             call spawn_mob
 
-            call render_scene
-            # SDL_RenderPresent(renderer);
-            movq game_ren(%rip), %rdi
-            call SDL_RenderPresent
-            jmp .main_loop
+            .skip_wave_update:
+                call render_scene
+                # SDL_RenderPresent(renderer);
+                movq game_ren(%rip), %rdi
+                call SDL_RenderPresent
+                jmp .main_loop
 
         jmp .main_loop
 
