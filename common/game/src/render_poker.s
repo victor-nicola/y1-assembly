@@ -70,25 +70,31 @@ render_hand:
 
     movq .cards_x(%rip), %r8
 
-    movl (%r8,0,4), %eax # Use Card 1 X as base
+    movq $0, %rcx
+
+    movl (%r8,%rcx,4), %eax # Use Card 1 X as base
+    incq %rcx
     addl .card_w(%rip), %eax
     addl .card_padding(%rip), %eax
-    movl %eax, (%r8,1,4) # Card 2 
+    movl %eax, (%r8,%rcx,4) # Card 2 
     
-    movl (%r8,1,4), %eax 
+    movl (%r8,%rcx,4), %eax 
+    incq %rcx
     addl .card_w(%rip), %eax
     addl .card_padding(%rip), %eax
-    movl %eax, (%r8,2,4) # Card 3
+    movl %eax, (%r8,%rcx,4) # Card 3
 
-    movl (%r8,2,4), %eax 
+    movl (%r8,%rcx,4), %eax 
+    incq %rcx
     addl .card_w(%rip), %eax
     addl .card_padding(%rip), %eax
-    movl %eax, (%r8,3,4) # Card 4
+    movl %eax, (%r8,%rcx,4) # Card 4
 
-    movl (%r8,3,4), %eax 
+    movl (%r8,%rcx,4), %eax 
+    incq %rcx
     addl .card_w(%rip), %eax
     addl .card_padding(%rip), %eax
-    movl %eax, (%r8,4,4) # Card 5
+    movl %eax, (%r8,%rcx,4) # Card 5
 
     movl %r8d, .cards_x(%rip)
 
