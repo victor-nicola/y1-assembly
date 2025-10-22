@@ -14,7 +14,7 @@ draw_text:
 
     movq %rdi, -8(%rbp) # string
     movss %xmm0, -12(%rbp) # x
-    movss %xmm0, -16(%rbp) # y
+    movss %xmm1, -16(%rbp) # y
 
     movq game_text(%rip), %rdi
     movq -8(%rbp), %rsi
@@ -27,6 +27,6 @@ draw_text:
     call TTF_DrawRendererText
 
     addq $16, %rsp
-    movq %rsp, %rbp
+    movq %rbp, %rsp
     popq %rbp
     ret

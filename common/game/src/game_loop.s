@@ -68,7 +68,7 @@ mob_w_center: .float 0
 mob_h_percentage: .float 0.75
 mob_w_percentage: .float 0.75
 
-coins: .long 0
+coins: .long 10
 coins_text_format: .asciz "Coins: %d"
 coins_text: .space 16
 coins_x: .float 0
@@ -361,7 +361,7 @@ render_scene:
     movss %xmm0, coins_y(%rip)
     
     movss tile_width(%rip), %xmm0
-    movl $12, %eax
+    movl $13, %eax
     cvtsi2ss %eax, %xmm1
     mulss %xmm1, %xmm0
     movl $2, %eax
@@ -370,6 +370,10 @@ render_scene:
     divss %xmm1, %xmm2
     addss %xmm2, %xmm0
     movss %xmm0, coins_x(%rip)
+
+    # load coins_x and coins_y into xmm0/xmm1 for draw_text(string, x, y)
+    movss coins_x(%rip), %xmm0
+    movss coins_y(%rip), %xmm1
     call draw_text
 
     addq $48, %rsp

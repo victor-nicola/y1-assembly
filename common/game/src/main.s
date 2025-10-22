@@ -10,8 +10,8 @@ ttf_create_text_engine: .asciz "TTF_CreateRendererTextEngine Error: %s\n"
 ttf_create_text: .asciz "TTF_CreateText Error: %s\n"
 window_title: .asciz "Assembly Game!"
 font_path: .asciz "../assets/fonts/PixelatedEleganceRegular-ovyAA.ttf"
-font_size_percentage: .float 0.02
-font_size: .float 20
+font_size_percentage: .float 0.025
+font_size: .float 0
 grass_tile_path: .asciz "../assets/map-tiles/grass.bmp"
 path_tile_path: .asciz "../assets/map-tiles/path.bmp"
 base_tile_path: .asciz "../assets/towers/eemcs.bmp"
