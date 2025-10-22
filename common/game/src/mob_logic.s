@@ -40,6 +40,9 @@ init_wave:
     movq %rsp, %rbp
     pushq %r15
     subq $8, %rsp
+    
+    movb $(WAVE_SIZE - 1), mob_index(%rip)
+    movb $0, last_spawn_time(%rip)
 
     movq $0, %r15
     .reset_pos_loop:

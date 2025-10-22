@@ -587,6 +587,9 @@ game_loop:
             cmpb $1, in_wave(%rip)
             je .test_in_wave
 
+            cmpl $0x00000020, %eax # if space key was pressed
+            je .start_wave
+            
             cmpb $-1, -129(%rbp) # if already holding a tower block tower changing (remove if all towers cost the same)
             jne .test_reset_place_tower
 
@@ -601,9 +604,6 @@ game_loop:
 
             cmpl $0x00000073, %eax # if s key was pressed
             je .place_stefan_init
-
-            cmpl $0x00000020, %eax # if space key was pressed
-            je .start_wave
 
             .test_reset_place_tower:
                 cmpl $0x0000001b, %eax # if esc key was pressed
@@ -624,6 +624,10 @@ game_loop:
             .start_wave:
                 movb $1, in_wave(%rip)
                 call init_wave
+                
+                cmpb $-1, -129(%rbp)
+                jne .reset_place_tower
+
                 jmp .render_frame
 
             .test_in_wave:
